@@ -1,54 +1,49 @@
 🖥 Health-InfraOps
-Healthcare Infrastructure & Operations Simulation for klinik online System
+Healthcare Infrastructure & Operations Simulation for e-Clinic / e-Puskesmas System
+<p align="center"> <img src="https://img.shields.io/badge/Status-In_Progress-blue" /> <img src="https://img.shields.io/badge/Infrastructure-Virtualization-orange" /> <img src="https://img.shields.io/badge/Monitoring-Zabbix%20%7C%20Grafana-green" /> <img src="https://img.shields.io/badge/Environment-Production%20Simulation-red" /> </p> <p align="center"> <img src="https://img.shields.io/github/stars/username/health-infraops?style=social" /> <img src="https://img.shields.io/github/forks/username/health-infraops?style=social" /> </p>
+🩺 Project Overview
 
-Proyek ini mensimulasikan infrastruktur data center untuk sistem layanan kesehatan berbasis web, seperti klinik atau layanan kesehatan. Tujuan proyek adalah menunjukkan kemampuan System Administrator / InfraOps / DevOps dalam membangun dan mengelola virtual infrastructure, networking, security, monitoring, dan disaster recovery.
-
-🎯 Project Objectives
-
-Membangun simulasi data center menggunakan virtual machine hypervisor
-
-Menjalankan multi-server environment (APP, DB, Proxy, AD, Monitoring)
-
-Menerapkan network security, VLAN segmentation, firewall, dan VPN
-
-Deploy cluster database, load balancing, monitoring, dan backup
-
-Integrasi automation & observability untuk production-grade system
+Health-InfraOps adalah proyek simulasi data center dan infrastruktur operasional untuk layanan kesehatan digital seperti eClinic dan ePuskesmas, dirancang sebagai portofolio profesional System Administrator / InfraOps / DevOps Engineer.
+Fokus proyek ini meliputi virtualisasi server, keamanan jaringan, cluster database, monitoring, backup, disaster recovery, dan automation.
 
 🧱 Tech Stack
-Layer	Tools / Technology
-Hypervisor	Proxmox VE / VMware / VirtualBox / Hyper-V
+Layer	Technology
+Hypervisor	Proxmox VE / VMware / VirtualBox
 OS Server	Ubuntu Server, Debian, Windows Server
-Networking	VLAN, DHCP, DNS, VPN, HAProxy, Nginx
-Database	PostgreSQL HA Cluster
+Network Services	DHCP, DNS, VPN, VLAN, HAProxy, Nginx
+Database	PostgreSQL High-Availability Cluster
 Monitoring	Zabbix, Prometheus, Grafana
-Backup & Storage	Proxmox Backup Server / Ceph
-Automation	Ansible, Bash scripting
-Security	Firewall IPtables / Fortigate rules
-Load Test	k6 / Apache Benchmark
-🏗 Infrastructure Topology
-                  ┌──────────────┐
-                  │  INTERNET     │
-                  └──────┬───────┘
-                         │
-                   ┌─────▼──────┐
-                   │  DMZ / LB   │  (HAProxy / Nginx)
-                   └─────┬──────┘
-      ┌──────────────────┼───────────────────┐
-      │                  │                   │
-┌─────▼────┐      ┌─────▼──────┐      ┌─────▼─────┐
-│  APP-01  │      │  DB-CL-01   │      │ MONITORING │
-│ Backend  │      │ PostgreSQL  │      │ Zabbix     │
-└──────────┘      └─────────────┘      └────────────┘
+Backup	Proxmox Backup Server / Ceph
+Automation	Ansible, Bash
+Security	IPtables, Fail2Ban, LDAP / AD
+Testing	k6, Apache Benchmark
+🖧 Architecture Diagram
 
-VLAN Segmentation
+Simulasi arsitektur data center skala enterprise
+
+<p align="center"> <img src="https://raw.githubusercontent.com/ekpurwanto/health-infraops/main/00-docs/architecture-diagram.png" width="720"/> </p>
+                  ┌──────────────┐
+                  │   INTERNET    │
+                  └───────┬───────┘
+                          │
+                     ┌────▼─────┐
+                     │  LB / DMZ │   (HAProxy / Proxy)
+                     └────┬─────┘
+    ┌─────────────────────┼──────────────────────┐
+    │                     │                      │
+┌───▼───────┐      ┌──────▼────────┐     ┌──────▼─────────┐
+│ APP-01    │      │ DB-CLUSTER     │     │ MONITORING      │
+│ Backend   │      │ PostgreSQL HA  │     │ Zabbix + Grafana │
+└───────────┘      └────────────────┘     └──────────────────┘
+
+Network Segmentation
 VLAN10 - PROD
 VLAN20 - DB
 VLAN30 - DMZ
 VLAN40 - MGMT
 VLAN50 - BACKUP
 
-🗂 Repository Structure
+📂 Repository Structure
 health-infraops/
 ├── 00-docs/
 ├── 01-lab-design/
@@ -62,59 +57,43 @@ health-infraops/
 ├── 09-health-app-simulation/
 └── 10-reports/
 
-⚙️ Virtual Machines Specification
-VM	OS	Spesifikasi	Fungsi
-VM-APP-01	Ubuntu 22.04	4 vCPU / 8GB RAM	Backend aplikasi
-VM-DB-CL-01	Ubuntu	8 vCPU / 32GB	PostgreSQL Cluster
-VM-LB-01	Ubuntu	2 vCPU / 4GB	HAProxy / Reverse Proxy
-VM-AD-01	Win Server	2 vCPU / 4GB	AD / LDAP
-VM-MON-01	Debian	4 vCPU / 8GB	Zabbix + Prometheus + Grafana
-📊 Monitoring Dashboard
+⚙️ Virtual Machines Setup
+VM	OS	Spec	Role
+VM-LB-01	Ubuntu	2 CPU / 4GB	Load Balancer
+VM-APP-01	Ubuntu	4 CPU / 8GB	Backend App
+VM-DB-CL-01	Ubuntu	8 CPU / 32GB	HA PostgreSQL
+VM-MON-01	Debian	4 CPU / 8GB	Zabbix + Grafana
+VM-AD-01	Win Server	2 CPU / 4GB	LDAP / AD Domain
+📦 Features
 
-Uptime Monitoring
+✔ Multi-server deployment
+✔ VLAN & network segmentation
+✔ Load balancing & reverse proxy
+✔ High-Availability PostgreSQL cluster
+✔ Centralized monitoring
+✔ Backup & Disaster Recovery test
+✔ Automated server provisioning
 
-CPU/RAM/Storage metrics
-
-Database & service health
-
-SLA monthly report
-
-📦 Key Deliverables
-Deliverable	Status
-Architecture diagram (.drawio)	✔
-VM build & configuration	✔
-Monitoring with Zabbix + Grafana	✔
-Backup & Disaster Recovery test	✔
-Load testing results	✔
-Documentation PDF	✔
-🧪 Demo & Test
-Load Testing Example
+🧪 Testing & Benchmark
 k6 run load-test.js
 
-📄 Reports
+📄 Reports Included
 Report	File
+Monthly SLA	/10-reports/uptime-sla-report.pdf
 Incident Log	/10-reports/incident-log.xlsx
-DR Testing Report	/07-backup-dr/full-dr-test-report.md
-SLA Uptime Report	/10-reports/uptime-sla-report.pdf
-🚀 How to Use This Project
-git clone https://github.com/<username>/health-infraops.git
+Disaster Recovery Report	/07-backup-dr/full-dr-test-report.md
+🚀 Getting Started
+git clone https://github.com/ekpurwanto/health-infraops.git
 cd health-infraops
 
 
-Ikuti step instalasi dalam folder /02-hypervisor-setup
+Install VM sesuai panduan pada folder:
 
-📌 Future Improvements
+/02-hypervisor-setup
 
-Kubernetes migration
+🔗 Connect & Collaboration
 
-Zero Trust access control
+📧 Email : your.email@example.com
 
-Implement Ceph distributed storage
-
-🙌 Support & Connect
-
-Jika ingin berkolaborasi atau membutuhkan file full OVF:
-📧 Email : ekpurwanto@gmail.com
-
-🔗 LinkedIn : https://linkedin.com/in/
-<username>
+🔗 LinkedIn : https://linkedin.com/in/ekopurwanto
+📦 GitHub : https://github.com/ekpurwanto

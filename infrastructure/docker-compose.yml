@@ -1,0 +1,52 @@
+version: "3.8"
+
+services:
+  app:
+    image: nginx:latest
+    container_name: web_app
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - infra-net
+
+  db:
+    image: postgres:15
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: healthdb
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - infra-net
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - infra-net
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - infra-net
+    depends_on:
+      - prometheus
+
+volumes:
+  db_data:
+
+networks:
+  infra-net:
+    driver: bridge

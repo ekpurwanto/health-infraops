@@ -28,6 +28,106 @@
 
 ## 🏗️ Architecture Overview```mermaid
 ```mermaid
+flowchart TB
+    %% =========== TOP LEVEL ===========
+    A0["HEALTH-INFRAOPS PLATFORM"]
+
+    %% =========== LAYER 1 ===========
+    subgraph L1["Load Balancer (HAProxy/Nginx)"]
+        A1["SSL Termination"]
+        A2["Health Checks"]
+        A3["Rate Limiting"]
+    end
+
+    subgraph M1["Monitoring Stack"]
+        B1["Prometheus"]
+        B2["Grafana"]
+        B3["Alertmanager"]
+    end
+
+    %% =========== LAYER 2 ===========
+    subgraph APP["Application Layer"]
+        C1["Node.js"]
+        C2["PM2"]
+        C3["REST APIs"]
+        C4["Python"]
+        C5["Gunicorn"]
+        C6["FastAPI"]
+    end
+
+    subgraph DB["Database Layer"]
+        D1["MySQL Cluster"]
+        D2["MongoDB ReplicaSet"]
+        D3["Redis Cache"]
+    end
+
+    %% =========== LAYER 3 ===========
+    subgraph ST["Storage Layer"]
+        E1["Ceph Cluster"]
+        E2["NFS Shares"]
+        E3["Backup Storage"]
+    end
+
+    subgraph SEC["Security Layer"]
+        F1["Bastion Host"]
+        F2["VPN Access"]
+        F3["Firewall Rules"]
+    end
+
+    %% =========== CONNECTIONS ===========
+    A0 --> L1
+    A0 --> M1
+    A0 --> APP
+    A0 --> DB
+    A0 --> ST
+    A0 --> SEC
+```
+
+
+### Network Segmentation
+- **VLAN10 (192.168.10.0/24)** - DMZ Network (Public facing services)
+- **VLAN20 (192.168.20.0/24)** - Application Network (Internal applications)
+- **VLAN30 (192.168.30.0/24)** - Database Network (Database servers)
+- **VLAN40 (192.168.40.0/24)** - Management Network (Administration)
+- **VLAN50 (192.168.50.0/24)** - Backup Network (Storage/Backup)
+
+## 🛠️ Tech Stack & Components
+
+### Virtualization & Infrastructure
+| Layer | Technology |
+|-------|------------|
+| **Hypervisor** | Proxmox VE, VMware, VirtualBox, Hyper-V |
+| **Operating Systems** | Ubuntu 22.04 LTS, CentOS 9, Debian 12 |
+| **Containerization** | Docker, Docker Compose |
+| **Infrastructure as Code** | Terraform, Ansible, Packer |
+
+### Application & Services
+| Component | Technology |
+|-----------|------------|
+| **Web Servers** | Nginx, Apache HTTPD |
+| **Application Runtime** | Node.js, Python, PM2, Gunicorn |
+| **Databases** | MySQL Cluster, MongoDB ReplicaSet, Redis |
+| **Message Queue** | RabbitMQ, Celery |
+
+### Monitoring & Observability
+| Component | Technology |
+|-----------|------------|
+| **Metrics** | Prometheus, Node Exporter |
+| **Visualization** | Grafana, Kibana |
+| **Logging** | ELK Stack, Loki Stack |
+| **Alerting** | Alertmanager, PagerDuty integration |
+
+### Security & Compliance
+| Component | Technology |
+|-----------|------------|
+| **Network Security** | iptables, UFW, Firewalld |
+| **Access Control** | SSH Key Management, Bastion Host |
+| **Certificate Management** | Let's Encrypt, OpenSSL |
+| **Audit & Compliance** | Lynis, Auditd, Fail2Ban |
+
+## 📁 Project Structure
+
+```mermaid
 flowchart TD
 
     A[health-infraops]
@@ -91,120 +191,6 @@ flowchart TD
     %% root script
     A --> K[setup-environment.sh]
 ```
-
-
-
-### Network Segmentation
-- **VLAN10 (192.168.10.0/24)** - DMZ Network (Public facing services)
-- **VLAN20 (192.168.20.0/24)** - Application Network (Internal applications)
-- **VLAN30 (192.168.30.0/24)** - Database Network (Database servers)
-- **VLAN40 (192.168.40.0/24)** - Management Network (Administration)
-- **VLAN50 (192.168.50.0/24)** - Backup Network (Storage/Backup)
-
-## 🛠️ Tech Stack & Components
-
-### Virtualization & Infrastructure
-| Layer | Technology |
-|-------|------------|
-| **Hypervisor** | Proxmox VE, VMware, VirtualBox, Hyper-V |
-| **Operating Systems** | Ubuntu 22.04 LTS, CentOS 9, Debian 12 |
-| **Containerization** | Docker, Docker Compose |
-| **Infrastructure as Code** | Terraform, Ansible, Packer |
-
-### Application & Services
-| Component | Technology |
-|-----------|------------|
-| **Web Servers** | Nginx, Apache HTTPD |
-| **Application Runtime** | Node.js, Python, PM2, Gunicorn |
-| **Databases** | MySQL Cluster, MongoDB ReplicaSet, Redis |
-| **Message Queue** | RabbitMQ, Celery |
-
-### Monitoring & Observability
-| Component | Technology |
-|-----------|------------|
-| **Metrics** | Prometheus, Node Exporter |
-| **Visualization** | Grafana, Kibana |
-| **Logging** | ELK Stack, Loki Stack |
-| **Alerting** | Alertmanager, PagerDuty integration |
-
-### Security & Compliance
-| Component | Technology |
-|-----------|------------|
-| **Network Security** | iptables, UFW, Firewalld |
-| **Access Control** | SSH Key Management, Bastion Host |
-| **Certificate Management** | Let's Encrypt, OpenSSL |
-| **Audit & Compliance** | Lynis, Auditd, Fail2Ban |
-
-## 📁 Project Structure
-
-```mermaid
-mindmap
-  root((health-infraops))
-
-    infrastructure
-      Virtualization & Hypervisors
-        Proxmox
-        VMware vSphere
-        VirtualBox / Vagrant
-        Hyper-V
-    servers
-      Web Servers
-        Nginx
-        Apache
-      App Servers
-        Node.js Apps
-        Python Apps
-      Database
-        MySQL
-        MongoDB
-      Monitoring
-        Prometheus
-        Grafana
-        Zabbix
-      Storage
-        Ceph
-        NFS
-    networking
-      Firewall
-        iptables
-        UFW
-        Firewalld
-      Load Balancer
-        HAProxy
-        Nginx LB
-      DNS
-        Bind9
-        Dnsmasq
-    security
-      SSL Certificates
-      SSH
-      Audit
-    automation
-      Ansible
-      Terraform
-      Scripts
-    documentation
-      Architecture Docs
-      Procedures
-      Compliance Docs
-    backups
-      Backup Scripts
-      Schedules (Cron)
-      Recovery Procedures
-    logs
-      Centralized Logs
-        ELK
-        Loki
-      Rotation Rules
-    monitoring-dashboards
-      Prometheus Alerts
-      Grafana Dashboards
-      Custom Metrics
-
-    setup-environment.sh
-```
-
-
 
 
 ## ⚡ Quick Start

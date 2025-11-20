@@ -26,64 +26,36 @@
 - 💾 **Disaster Recovery** - Automated backup dan recovery procedures
 - 🤖 **Infrastructure as Code** - Automated provisioning dan deployment
 
-## 🏗️ Architecture Overview```mermaid
-```mermaid
-flowchart TB
-    %% =========== TOP LEVEL ===========
-    A0["HEALTH-INFRAOPS PLATFORM"]
-
-    %% =========== LAYER 1 ===========
-    subgraph L1["Load Balancer (HAProxy/Nginx)"]
-        A1["SSL Termination"]
-        A2["Health Checks"]
-        A3["Rate Limiting"]
-    end
-
-    subgraph M1["Monitoring Stack"]
-        B1["Prometheus"]
-        B2["Grafana"]
-        B3["Alertmanager"]
-    end
-
-    %% =========== LAYER 2 ===========
-    subgraph APP["Application Layer"]
-        C1["Node.js"]
-        C2["PM2"]
-        C3["REST APIs"]
-        C4["Python"]
-        C5["Gunicorn"]
-        C6["FastAPI"]
-    end
-
-    subgraph DB["Database Layer"]
-        D1["MySQL Cluster"]
-        D2["MongoDB ReplicaSet"]
-        D3["Redis Cache"]
-    end
-
-    %% =========== LAYER 3 ===========
-    subgraph ST["Storage Layer"]
-        E1["Ceph Cluster"]
-        E2["NFS Shares"]
-        E3["Backup Storage"]
-    end
-
-    subgraph SEC["Security Layer"]
-        F1["Bastion Host"]
-        F2["VPN Access"]
-        F3["Firewall Rules"]
-    end
-
-    %% =========== CONNECTIONS ===========
-    A0 --> L1
-    A0 --> M1
-    A0 --> APP
-    A0 --> DB
-    A0 --> ST
-    A0 --> SEC
+## 🏗️ Architecture Overview
 ```
-
-
+┌───────────────────────────────────────────────────────────────────────────────┐
+│ HEALTH-INFRAOPS PLATFORM                                                      │
+├───────────────────────────────────────────────────────────────────────────────┤
+│ Load Balancer (HAProxy/Nginx)           Monitoring Stack                     │
+│ ┌───────────────────────────────────────────────┐  ┌─────────────────────────┐│
+│ │ • SSL Termination                             │  │ • Prometheus            ││
+│ │ • Health Checks                               │  │ • Grafana               ││
+│ │ • Rate Limiting                               │  │ • Alertmanager          ││
+│ └───────────────────────────────────────────────┘  └─────────────────────────┘│
+├───────────────────────────────────────────────────────────────────────────────┤
+│ Application Layer                               Database Layer                │
+│ ┌───────────────────────────┐ ┌───────────────────────────┐  ┌─────────────┐ │
+│ │ • Node.js                 │ │ • Python                  │  │ • MySQL     │ │
+│ │ • PM2                     │ │ • Gunicorn                │  │   Cluster   │ │
+│ │ • REST APIs               │ │ • FastAPI                 │  │ • MongoDB   │ │
+│ └───────────────────────────┘ └───────────────────────────┘  │   ReplicaSet│ │
+│                                                                │ • Redis     │ │
+│                                                                │   Cache     │ │
+│                                                                └─────────────┘ │
+├───────────────────────────────────────────────────────────────────────────────┤
+│ Storage Layer                               Security Layer                    │
+│ ┌───────────────────────────────────────────┐  ┌────────────────────────┐    │
+│ │ • Ceph Cluster                            │  │ • Bastion Host         │    │
+│ │ • NFS Shares                              │  │ • VPN Access           │    │
+│ │ • Backup Storage                          │  │ • Firewall Rules       │    │
+│ └───────────────────────────────────────────┘  └────────────────────────┘    │
+└───────────────────────────────────────────────────────────────────────────────┘
+```
 ### Network Segmentation
 - **VLAN10 (192.168.10.0/24)** - DMZ Network (Public facing services)
 - **VLAN20 (192.168.20.0/24)** - Application Network (Internal applications)
@@ -126,72 +98,52 @@ flowchart TB
 | **Audit & Compliance** | Lynis, Auditd, Fail2Ban |
 
 ## 📁 Project Structure
-```mermaid
-flowchart TD
 
-    root["📁 health-infraops/"]
-
-    %% infrastructure
-    root --> infra["📁 infrastructure/ — Virtualization & Hypervisor configs"]
-    infra --> infra1["📁 proxmox/ — Proxmox VE configurations"]
-    infra --> infra2["📁 vmware/ — VMware vSphere configurations"]
-    infra --> infra3["📁 virtualbox/ — VirtualBox/Vagrant configurations"]
-    infra --> infra4["📁 hyper-v/ — Microsoft Hyper-V configurations"]
-
-    %% servers
-    root --> servers["📁 servers/ — Server configurations"]
-    servers --> s1["📁 web-servers/ — Nginx, Apache configurations"]
-    servers --> s2["📁 app-servers/ — Node.js, Python apps"]
-    servers --> s3["📁 database/ — MySQL, MongoDB configurations"]
-    servers --> s4["📁 monitoring/ — Prometheus, Grafana, Zabbix"]
-    servers --> s5["📁 storage/ — Ceph, NFS configurations"]
-
-    %% networking
-    root --> net["📁 networking/ — Network infrastructure"]
-    net --> net1["📁 firewall/ — iptables, UFW, Firewalld"]
-    net --> net2["📁 load-balancer/ — HAProxy, Nginx LB"]
-    net --> net3["📁 dns/ — Bind9, Dnsmasq"]
-
-    %% security
-    root --> sec["📁 security/ — Security configurations"]
-    sec --> sec1["📁 ssl-certificates/ — TLS/SSL management"]
-    sec --> sec2["📁 ssh/ — SSH configurations"]
-    sec --> sec3["📁 audit/ — Security auditing"]
-
-    %% automation
-    root --> auto["📁 automation/ — Infrastructure as Code"]
-    auto --> a1["📁 ansible/ — Playbooks & roles"]
-    auto --> a2["📁 terraform/ — Terraform modules"]
-    auto --> a3["📁 scripts/ — Deployment & management scripts"]
-
-    %% documentation
-    root --> docs["📁 documentation/ — Comprehensive documentation"]
-    docs --> d1["📁 architecture/"]
-    docs --> d2["📁 procedures/"]
-    docs --> d3["📁 compliance/"]
-
-    %% backups
-    root --> backups["📁 backups/ — Backup & recovery"]
-    backups --> b1["📁 scripts/ — Backup scripts"]
-    backups --> b2["📁 schedules/ — Cron schedules"]
-    backups --> b3["📁 recovery/ — Recovery procedures"]
-
-    %% logs
-    root --> logs["📁 logs/ — Log management"]
-    logs --> l1["📁 centralized/ — ELK / Loki"]
-    logs --> l2["📁 rotation/ — Log rotation configs"]
-
-    %% monitoring dashboards
-    root --> moni["📁 monitoring-dashboards/ — Monitoring & dashboards"]
-    moni --> m1["📁 prometheus-alerts/ — Alert rules"]
-    moni --> m2["📁 grafana-dashboards/ — Dashboards"]
-    moni --> m3["📁 custom-metrics/ — App metrics"]
-
-    %% root script
-    root --> setup["📄 setup-environment.sh — Quick setup script"]
 ```
-
-
+health-infraops/
+├── infrastructure/          # Virtualization & Hypervisor configs
+│   ├── proxmox/            # Proxmox VE configurations
+│   ├── vmware/             # VMware vSphere configurations  
+│   ├── virtualbox/         # VirtualBox/Vagrant configurations
+│   └── hyper-v/            # Microsoft Hyper-V configurations
+├── servers/                # Server configurations
+│   ├── web-servers/        # Nginx, Apache configurations
+│   ├── app-servers/        # Node.js, Python application configs
+│   ├── database/           # MySQL, MongoDB configurations
+│   ├── monitoring/         # Prometheus, Grafana, Zabbix
+│   └── storage/            # Ceph, NFS configurations
+├── networking/             # Network infrastructure
+│   ├── firewall/           # iptables, UFW, Firewalld
+│   ├── load-balancer/      # HAProxy, Nginx LB
+│   └── dns/                # Bind9, Dnsmasq
+├── security/               # Security configurations
+│   ├── ssl-certificates/   # TLS/SSL management
+│   ├── ssh/                # SSH configurations
+│   └── audit/              # Security auditing
+├── automation/             # Infrastructure as Code
+│   ├── ansible/            # Ansible playbooks & roles
+│   ├── terraform/          # Terraform modules
+│   └── scripts/            # Deployment & management scripts
+├── documentation/          # Comprehensive documentation
+│   ├── architecture/       # Architecture diagrams & docs
+│   ├── procedures/         # Operational procedures
+│   └── compliance/         # Security & compliance docs
+├── backups/                # Backup & recovery
+│   ├── scripts/            # Backup scripts
+│   ├── schedules/          # Cron schedules
+│   └── recovery/           # Recovery procedures
+├── logs/                   # Log management
+│   ├── centralized/        # ELK/Loki stack configs
+│   └── rotation/           # Log rotation configurations
+├── monitoring-dashboards/  # Monitoring & dashboards
+│   ├── prometheus-alerts/  # Alerting rules
+│   ├── grafana-dashboards/ # Grafana dashboards
+│   └── custom-metrics/     # Custom application metrics
+├── README.md
+├── requirements.txt
+├── setup-environment.sh
+└── docker-compose.yml
+```
 ## ⚡ Quick Start
 
 ### Prerequisites
@@ -446,11 +398,3 @@ Create new issue dengan detailed description
 
 📄 License
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-<div align="center">
-🏆 Professional Infrastructure Portfolio
-"Demonstrating enterprise-grade healthcare infrastructure management capabilities"
-
-⭐ Star this repo jika project ini membantu Anda!
-
-</div>

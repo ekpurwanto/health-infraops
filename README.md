@@ -26,35 +26,32 @@
 - 💾 **Disaster Recovery** - Automated backup dan recovery procedures
 - 🤖 **Infrastructure as Code** - Automated provisioning dan deployment
 
-## 🏗️ Architecture Overview
-+-------------------------------------------------------------------------------+
-|                          HEALTH-INFRAOPS PLATFORM                             |
-+-------------------------------+-----------------------------------------------+
-| Load Balancer (HAProxy/Nginx) |                 Monitoring Stack              |
-| +---------------------------+ | +-----------------------------+               |
-| | - SSL Termination         | | | - Prometheus               |               |
-| | - Health Checks           | | | - Grafana                  |               |
-| | - Rate Limiting           | | | - Alertmanager             |               |
-| +---------------------------+ | +-----------------------------+               |
-+-------------------------------+-----------------------------------------------+
-| Application Layer            |               Database Layer                  |
-| +--------------------------+  +----------------------------+   +-------------+ |
-| | - Node.js                |  | - Python                   |   | - MySQL     | |
-| | - PM2                    |  | - Gunicorn                 |   |   Cluster   | |
-| | - REST APIs              |  | - FastAPI                  |   | - MongoDB   | |
-| +--------------------------+  +----------------------------+   |   ReplicaSet | |
-|                                                               | - Redis      | |
-|                                                               |   Cache      | |
-|                                                               +-------------+ |
-+-------------------------------+-----------------------------------------------+
-| Storage Layer                |                 Security Layer                 |
-| +---------------------------+ | +-----------------------------+               |
-| | - Ceph Cluster            | | | - Bastion Host             |               |
-| | - NFS Shares              | | | - VPN Access               |               |
-| | - Backup Storage          | | | - Firewall Rules           |               |
-| +---------------------------+ | +-----------------------------+               |
-+-------------------------------------------------------------------------------+
+## 🏗️ Architecture Overview```mermaid
+flowchart TD
+    A[Load Balancer] --> A1[SSL Termination]
+    A --> A2[Health Checks]
+    A --> A3[Rate Limiting]
 
+    B[Monitoring] --> B1[Prometheus]
+    B --> B2[Grafana]
+    B --> B3[Alertmanager]
+
+    C[Application Layer] --> C1[Node.js]
+    C --> C2[PM2]
+    C --> C3[REST APIs]
+
+    D[Database Layer] --> D1[MySQL Cluster]
+    D --> D2[MongoDB ReplicaSet]
+    D --> D3[Redis Cache]
+
+    E[Storage Layer] --> E1[Ceph Cluster]
+    E --> E2[NFS Shares]
+    E --> E3[Backup Storage]
+
+    F[Security Layer] --> F1[Bastion Host]
+    F --> F2[VPN Access]
+    F --> F3[Firewall Rules]
+```
 
 
 ### Network Segmentation

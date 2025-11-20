@@ -27,62 +27,71 @@
 - 🤖 **Infrastructure as Code** - Automated provisioning dan deployment
 
 ## 🏗️ Architecture Overview```mermaid
-
 ```mermaid
-flowchart TB
-    %% =========== TOP LEVEL ===========
-    A0["HEALTH-INFRAOPS PLATFORM"]
+flowchart TD
 
-    %% =========== LAYER 1 ===========
-    subgraph L1["Load Balancer (HAProxy/Nginx)"]
-        A1["SSL Termination"]
-        A2["Health Checks"]
-        A3["Rate Limiting"]
-    end
+    A[health-infraops]
 
-    subgraph M1["Monitoring Stack"]
-        B1["Prometheus"]
-        B2["Grafana"]
-        B3["Alertmanager"]
-    end
+    %% infrastructure
+    A --> B[infrastructure/]
+    B --> B1[proxmox/]
+    B --> B2[vmware/]
+    B --> B3[virtualbox/]
+    B --> B4[hyper-v/]
 
-    %% =========== LAYER 2 ===========
-    subgraph APP["Application Layer"]
-        C1["Node.js"]
-        C2["PM2"]
-        C3["REST APIs"]
-        C4["Python"]
-        C5["Gunicorn"]
-        C6["FastAPI"]
-    end
+    %% servers
+    A --> C[servers/]
+    C --> C1[web-servers/]
+    C --> C2[app-servers/]
+    C --> C3[database/]
+    C --> C4[monitoring/]
+    C --> C5[storage/]
 
-    subgraph DB["Database Layer"]
-        D1["MySQL Cluster"]
-        D2["MongoDB ReplicaSet"]
-        D3["Redis Cache"]
-    end
+    %% networking
+    A --> D[networking/]
+    D --> D1[firewall/]
+    D --> D2[load-balancer/]
+    D --> D3[dns/]
 
-    %% =========== LAYER 3 ===========
-    subgraph ST["Storage Layer"]
-        E1["Ceph Cluster"]
-        E2["NFS Shares"]
-        E3["Backup Storage"]
-    end
+    %% security
+    A --> E[security/]
+    E --> E1[ssl-certificates/]
+    E --> E2[ssh/]
+    E --> E3[audit/]
 
-    subgraph SEC["Security Layer"]
-        F1["Bastion Host"]
-        F2["VPN Access"]
-        F3["Firewall Rules"]
-    end
+    %% automation
+    A --> F[automation/]
+    F --> F1[ansible/]
+    F --> F2[terraform/]
+    F --> F3[scripts/]
 
-    %% =========== CONNECTIONS ===========
-    A0 --> L1
-    A0 --> M1
-    A0 --> APP
-    A0 --> DB
-    A0 --> ST
-    A0 --> SEC
+    %% documentation
+    A --> G[documentation/]
+    G --> G1[architecture/]
+    G --> G2[procedures/]
+    G --> G3[compliance/]
+
+    %% backups
+    A --> H[backups/]
+    H --> H1[scripts/]
+    H --> H2[schedules/]
+    H --> H3[recovery/]
+
+    %% logs
+    A --> I[logs/]
+    I --> I1[centralized/]
+    I --> I2[rotation/]
+
+    %% monitoring dashboards
+    A --> J[monitoring-dashboards/]
+    J --> J1[prometheus-alerts/]
+    J --> J2[grafana-dashboards/]
+    J --> J3[custom-metrics/]
+
+    %% root script
+    A --> K[setup-environment.sh]
 ```
+
 
 
 ### Network Segmentation

@@ -27,31 +27,62 @@
 - 🤖 **Infrastructure as Code** - Automated provisioning dan deployment
 
 ## 🏗️ Architecture Overview```mermaid
+
 ```mermaid
-flowchart TD
-    A[Load Balancer] --> A1[SSL Termination]
-    A --> A2[Health Checks]
-    A --> A3[Rate Limiting]
+flowchart TB
+    %% =========== TOP LEVEL ===========
+    A0([HEALTH-INFRAOPS PLATFORM])
 
-    B[Monitoring] --> B1[Prometheus]
-    B --> B2[Grafana]
-    B --> B3[Alertmanager]
+    %% =========== LAYER 1 ===========
+    subgraph L1[Load Balancer (HAProxy/Nginx)]
+        A1[SSL Termination]
+        A2[Health Checks]
+        A3[Rate Limiting]
+    end
 
-    C[Application Layer] --> C1[Node.js]
-    C --> C2[PM2]
-    C --> C3[REST APIs]
+    subgraph M1[Monitoring Stack]
+        B1[Prometheus]
+        B2[Grafana]
+        B3[Alertmanager]
+    end
 
-    D[Database Layer] --> D1[MySQL Cluster]
-    D --> D2[MongoDB ReplicaSet]
-    D --> D3[Redis Cache]
+    %% =========== LAYER 2 ===========
+    subgraph APP[Application Layer]
+        C1[Node.js]
+        C2[PM2]
+        C3[REST APIs]
+        C4[Python]
+        C5[Gunicorn]
+        C6[FastAPI]
+    end
 
-    E[Storage Layer] --> E1[Ceph Cluster]
-    E --> E2[NFS Shares]
-    E --> E3[Backup Storage]
+    subgraph DB[Database Layer]
+        D1[MySQL Cluster]
+        D2[MongoDB ReplicaSet]
+        D3[Redis Cache]
+    end
 
-    F[Security Layer] --> F1[Bastion Host]
-    F --> F2[VPN Access]
-    F --> F3[Firewall Rules]
+    %% =========== LAYER 3 ===========
+    subgraph ST[Storage Layer]
+        E1[Ceph Cluster]
+        E2[NFS Shares]
+        E3[Backup Storage]
+    end
+
+    subgraph SEC[Security Layer]
+        F1[Bastion Host]
+        F2[VPN Access]
+        F3[Firewall Rules]
+    end
+
+
+    %% =========== CONNECTIONS ===========
+    A0 --> L1
+    A0 --> M1
+    A0 --> APP
+    A0 --> DB
+    A0 --> ST
+    A0 --> SEC
 ```
 
 

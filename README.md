@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # 🖥 Health-InfraOps
 **Healthcare Infrastructure & Operations Simulation for e-Clinic / e-Puskesmas System**
 
@@ -505,8 +504,7 @@ Install VM sesuai panduan pada folder:
 
 🔗 Connect & Collaboration
 
-📧 Email : your.email@example.com
 
-🔗 LinkedIn : https://linkedin.com/in/ekopurwanto
+🔗 LinkedIn : [https://linkedin.com/in/ekopurwanto](https://www.linkedin.com/in/eko-purwanto)
 📦 GitHub : https://github.com/ekpurwanto
->>>>>>> 308c92f8ccb9eb322eb7aa60da6a589e840b46f7
+

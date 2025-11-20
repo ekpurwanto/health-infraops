@@ -126,70 +126,69 @@ flowchart TB
 | **Audit & Compliance** | Lynis, Auditd, Fail2Ban |
 
 ## 📁 Project Structure
-
 ```mermaid
 flowchart TD
 
-    A[health-infraops]
+    root["📁 health-infraops/"]
 
     %% infrastructure
-    A --> B[infrastructure/]
-    B --> B1[proxmox/]
-    B --> B2[vmware/]
-    B --> B3[virtualbox/]
-    B --> B4[hyper-v/]
+    root --> infra["📁 infrastructure/ — Virtualization & Hypervisor configs"]
+    infra --> infra1["📁 proxmox/ — Proxmox VE configurations"]
+    infra --> infra2["📁 vmware/ — VMware vSphere configurations"]
+    infra --> infra3["📁 virtualbox/ — VirtualBox/Vagrant configurations"]
+    infra --> infra4["📁 hyper-v/ — Microsoft Hyper-V configurations"]
 
     %% servers
-    A --> C[servers/]
-    C --> C1[web-servers/]
-    C --> C2[app-servers/]
-    C --> C3[database/]
-    C --> C4[monitoring/]
-    C --> C5[storage/]
+    root --> servers["📁 servers/ — Server configurations"]
+    servers --> s1["📁 web-servers/ — Nginx, Apache configurations"]
+    servers --> s2["📁 app-servers/ — Node.js, Python apps"]
+    servers --> s3["📁 database/ — MySQL, MongoDB configurations"]
+    servers --> s4["📁 monitoring/ — Prometheus, Grafana, Zabbix"]
+    servers --> s5["📁 storage/ — Ceph, NFS configurations"]
 
     %% networking
-    A --> D[networking/]
-    D --> D1[firewall/]
-    D --> D2[load-balancer/]
-    D --> D3[dns/]
+    root --> net["📁 networking/ — Network infrastructure"]
+    net --> net1["📁 firewall/ — iptables, UFW, Firewalld"]
+    net --> net2["📁 load-balancer/ — HAProxy, Nginx LB"]
+    net --> net3["📁 dns/ — Bind9, Dnsmasq"]
 
     %% security
-    A --> E[security/]
-    E --> E1[ssl-certificates/]
-    E --> E2[ssh/]
-    E --> E3[audit/]
+    root --> sec["📁 security/ — Security configurations"]
+    sec --> sec1["📁 ssl-certificates/ — TLS/SSL management"]
+    sec --> sec2["📁 ssh/ — SSH configurations"]
+    sec --> sec3["📁 audit/ — Security auditing"]
 
     %% automation
-    A --> F[automation/]
-    F --> F1[ansible/]
-    F --> F2[terraform/]
-    F --> F3[scripts/]
+    root --> auto["📁 automation/ — Infrastructure as Code"]
+    auto --> a1["📁 ansible/ — Playbooks & roles"]
+    auto --> a2["📁 terraform/ — Terraform modules"]
+    auto --> a3["📁 scripts/ — Deployment & management scripts"]
 
     %% documentation
-    A --> G[documentation/]
-    G --> G1[architecture/]
-    G --> G2[procedures/]
-    G --> G3[compliance/]
+    root --> docs["📁 documentation/ — Comprehensive documentation"]
+    docs --> d1["📁 architecture/"]
+    docs --> d2["📁 procedures/"]
+    docs --> d3["📁 compliance/"]
 
     %% backups
-    A --> H[backups/]
-    H --> H1[scripts/]
-    H --> H2[schedules/]
-    H --> H3[recovery/]
+    root --> backups["📁 backups/ — Backup & recovery"]
+    backups --> b1["📁 scripts/ — Backup scripts"]
+    backups --> b2["📁 schedules/ — Cron schedules"]
+    backups --> b3["📁 recovery/ — Recovery procedures"]
 
     %% logs
-    A --> I[logs/]
-    I --> I1[centralized/]
-    I --> I2[rotation/]
+    root --> logs["📁 logs/ — Log management"]
+    logs --> l1["📁 centralized/ — ELK / Loki"]
+    logs --> l2["📁 rotation/ — Log rotation configs"]
 
     %% monitoring dashboards
-    A --> J[monitoring-dashboards/]
-    J --> J1[prometheus-alerts/]
-    J --> J2[grafana-dashboards/]
-    J --> J3[custom-metrics/]
+    root --> moni["📁 monitoring-dashboards/ — Monitoring & dashboards"]
+    moni --> m1["📁 prometheus-alerts/ — Alert rules"]
+    moni --> m2["📁 grafana-dashboards/ — Dashboards"]
+    moni --> m3["📁 custom-metrics/ — App metrics"]
 
     %% root script
-    A --> K[setup-environment.sh]
+    root --> setup["📄 setup-environment.sh — Quick setup script"]
 ```
 
 
@@ -455,105 +454,3 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ⭐ Star this repo jika project ini membantu Anda!
 
 </div>
-
-
-=======
-🖥 Health-InfraOps
-Healthcare Infrastructure & Operations Simulation for e-Clinic / e-Puskesmas System
-<p align="center"> <img src="https://img.shields.io/badge/Status-In_Progress-blue" /> <img src="https://img.shields.io/badge/Infrastructure-Virtualization-orange" /> <img src="https://img.shields.io/badge/Monitoring-Zabbix%20%7C%20Grafana-green" /> <img src="https://img.shields.io/badge/Environment-Production%20Simulation-red" /> </p> <p align="center"> <img src="https://img.shields.io/github/stars/username/health-infraops?style=social" /> <img src="https://img.shields.io/github/forks/username/health-infraops?style=social" /> </p>
-🩺 Project Overview
-
-Health-InfraOps adalah proyek simulasi data center dan infrastruktur operasional untuk layanan kesehatan digital seperti eClinic dan ePuskesmas, dirancang sebagai portofolio profesional System Administrator / InfraOps / DevOps Engineer.
-Fokus proyek ini meliputi virtualisasi server, keamanan jaringan, cluster database, monitoring, backup, disaster recovery, dan automation.
-
-🧱 Tech Stack
-Layer	Technology
-Hypervisor	Proxmox VE / VMware / VirtualBox
-OS Server	Ubuntu Server, Debian, Windows Server
-Network Services	DHCP, DNS, VPN, VLAN, HAProxy, Nginx
-Database	PostgreSQL High-Availability Cluster
-Monitoring	Zabbix, Prometheus, Grafana
-Backup	Proxmox Backup Server / Ceph
-Automation	Ansible, Bash
-Security	IPtables, Fail2Ban, LDAP / AD
-Testing	k6, Apache Benchmark
-🖧 Architecture Diagram
-
-Simulasi arsitektur data center skala enterprise
-
-<p align="center"> <img src="https://raw.githubusercontent.com/ekpurwanto/health-infraops/main/00-docs/architecture-diagram.png" width="720"/> </p>
-                  ┌──────────────┐
-                  │   INTERNET    │
-                  └───────┬───────┘
-                          │
-                     ┌────▼─────┐
-                     │  LB / DMZ │   (HAProxy / Proxy)
-                     └────┬─────┘
-    ┌─────────────────────┼──────────────────────┐
-    │                     │                      │
-┌───▼───────┐      ┌──────▼────────┐     ┌──────▼─────────┐
-│ APP-01    │      │ DB-CLUSTER     │     │ MONITORING      │
-│ Backend   │      │ PostgreSQL HA  │     │ Zabbix + Grafana │
-└───────────┘      └────────────────┘     └──────────────────┘
-
-Network Segmentation
-VLAN10 - PROD
-VLAN20 - DB
-VLAN30 - DMZ
-VLAN40 - MGMT
-VLAN50 - BACKUP
-
-📂 Repository Structure
-health-infraops/
-├── 00-docs/
-├── 01-lab-design/
-├── 02-hypervisor-setup/
-├── 03-vm-configuration/
-├── 04-networking-security/
-├── 05-services-setup/
-├── 06-monitoring-observability/
-├── 07-backup-dr/
-├── 08-ci-cd-devops/
-├── 09-health-app-simulation/
-└── 10-reports/
-
-⚙️ Virtual Machines Setup
-VM	OS	Spec	Role
-VM-LB-01	Ubuntu	2 CPU / 4GB	Load Balancer
-VM-APP-01	Ubuntu	4 CPU / 8GB	Backend App
-VM-DB-CL-01	Ubuntu	8 CPU / 32GB	HA PostgreSQL
-VM-MON-01	Debian	4 CPU / 8GB	Zabbix + Grafana
-VM-AD-01	Win Server	2 CPU / 4GB	LDAP / AD Domain
-📦 Features
-
-✔ Multi-server deployment
-✔ VLAN & network segmentation
-✔ Load balancing & reverse proxy
-✔ High-Availability PostgreSQL cluster
-✔ Centralized monitoring
-✔ Backup & Disaster Recovery test
-✔ Automated server provisioning
-
-🧪 Testing & Benchmark
-k6 run load-test.js
-
-📄 Reports Included
-Report	File
-Monthly SLA	/10-reports/uptime-sla-report.pdf
-Incident Log	/10-reports/incident-log.xlsx
-Disaster Recovery Report	/07-backup-dr/full-dr-test-report.md
-🚀 Getting Started
-git clone https://github.com/ekpurwanto/health-infraops.git
-cd health-infraops
-
-
-Install VM sesuai panduan pada folder:
-
-/02-hypervisor-setup
-
-🔗 Connect & Collaboration
-
-
-🔗 LinkedIn : [https://linkedin.com/in/ekopurwanto](https://www.linkedin.com/in/eko-purwanto)
-📦 GitHub : https://github.com/ekpurwanto
-

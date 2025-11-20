@@ -128,46 +128,73 @@ flowchart TB
 
 ## 📁 Project Structure
 
-health-infraops/
-├── 📁 infrastructure/ # Virtualization & Hypervisor configs
-│ ├── 📁 proxmox/ # Proxmox VE configurations
-│ ├── 📁 vmware/ # VMware vSphere configurations
-│ ├── 📁 virtualbox/ # VirtualBox/Vagrant configurations
-│ └── 📁 hyper-v/ # Microsoft Hyper-V configurations
-├── 📁 servers/ # Server configurations
-│ ├── 📁 web-servers/ # Nginx, Apache configurations
-│ ├── 📁 app-servers/ # Node.js, Python application configs
-│ ├── 📁 database/ # MySQL, MongoDB configurations
-│ ├── 📁 monitoring/ # Prometheus, Grafana, Zabbix
-│ └── 📁 storage/ # Ceph, NFS configurations
-├── 📁 networking/ # Network infrastructure
-│ ├── 📁 firewall/ # iptables, UFW, Firewalld
-│ ├── 📁 load-balancer/ # HAProxy, Nginx LB
-│ └── 📁 dns/ # Bind9, Dnsmasq
-├── 📁 security/ # Security configurations
-│ ├── 📁 ssl-certificates/ # TLS/SSL management
-│ ├── 📁 ssh/ # SSH configurations
-│ └── 📁 audit/ # Security auditing
-├── 📁 automation/ # Infrastructure as Code
-│ ├── 📁 ansible/ # Ansible playbooks & roles
-│ ├── 📁 terraform/ # Terraform modules
-│ └── 📁 scripts/ # Deployment & management scripts
-├── 📁 documentation/ # Comprehensive documentation
-│ ├── 📁 architecture/ # Architecture diagrams & docs
-│ ├── 📁 procedures/ # Operational procedures
-│ └── 📁 compliance/ # Security & compliance docs
-├── 📁 backups/ # Backup & recovery
-│ ├── 📁 scripts/ # Backup scripts
-│ ├── 📁 schedules/ # Cron schedules
-│ └── 📁 recovery/ # Recovery procedures
-├── 📁 logs/ # Log management
-│ ├── 📁 centralized/ # ELK/Loki stack configs
-│ └── 📁 rotation/ # Log rotation configurations
-├── 📁 monitoring-dashboards/ # Monitoring & dashboards
-│ ├── 📁 prometheus-alerts/ # Alerting rules
-│ ├── 📁 grafana-dashboards/ # Grafana dashboards
-│ └── 📁 custom-metrics/ # Custom application metrics
-└── 📄 setup-environment.sh # Quick setup script
+```mermaid
+mindmap
+  root((health-infraops))
+
+    infrastructure
+      Virtualization & Hypervisors
+        Proxmox
+        VMware vSphere
+        VirtualBox / Vagrant
+        Hyper-V
+    servers
+      Web Servers
+        Nginx
+        Apache
+      App Servers
+        Node.js Apps
+        Python Apps
+      Database
+        MySQL
+        MongoDB
+      Monitoring
+        Prometheus
+        Grafana
+        Zabbix
+      Storage
+        Ceph
+        NFS
+    networking
+      Firewall
+        iptables
+        UFW
+        Firewalld
+      Load Balancer
+        HAProxy
+        Nginx LB
+      DNS
+        Bind9
+        Dnsmasq
+    security
+      SSL Certificates
+      SSH
+      Audit
+    automation
+      Ansible
+      Terraform
+      Scripts
+    documentation
+      Architecture Docs
+      Procedures
+      Compliance Docs
+    backups
+      Backup Scripts
+      Schedules (Cron)
+      Recovery Procedures
+    logs
+      Centralized Logs
+        ELK
+        Loki
+      Rotation Rules
+    monitoring-dashboards
+      Prometheus Alerts
+      Grafana Dashboards
+      Custom Metrics
+
+    setup-environment.sh
+```
+
 
 
 

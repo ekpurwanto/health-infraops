@@ -1,0 +1,239 @@
+---
+# Health-InfraOps Monitoring Stack Setup
+# Infokes Healthcare System - Monitoring Infrastructure
+
+- name: Deploy Monitoring Stack
+  hosts: monitoring_servers
+  become: yes
+  vars_files:
+    - "../group_vars/all.yml"
+  
+  pre_tasks:
+    - name: Check monitoring server requirements
+      assert:
+        that:
+          - ansible_memtotal_mb >= 4096
+          - ansible_processor_cores >= 2
+          - ansible_devices.sda.size >= 50
+        msg: "Monitoring server does not meet minimum requirements"
+
+  roles:
+    - role: prometheus
+      tags: prometheus
+    - role: grafana
+      tags: grafana
+    - role: node_exporter
+      tags: exporters
+
+  tasks:
+    - name: Create monitoring directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: prometheus
+        group: prometheus
+        mode: '0755'
+      loop:
+        - /var/lib/prometheus
+        - /var/log/prometheus
+        - /etc/prometheus/rules
+        - /etc/grafana/provisioning
+
+    - name: Deploy Prometheus configuration
+      template:
+        src: prometheus.yml.j2
+        dest: /etc/prometheus/prometheus.yml
+        owner: prometheus
+        group: prometheus
+        mode: '0644'
+      notify: restart prometheus
+
+    - name: Deploy alert rules
+      template:
+        src: alerts/health-infraops-alerts.yml.j2
+        dest: /etc/prometheus/rules/health-infraops-alerts.yml
+        owner: prometheus
+        group: prometheus
+        mode: '0644'
+      notify: reload prometheus
+
+    - name: Deploy Grafana configuration
+      template:
+        src: grafana.ini.j2
+        dest: /etc/grafana/grafana.ini
+        owner: grafana
+        group: grafana
+        mode: '0644'
+      notify: restart grafana
+
+    - name: Setup Grafana datasources
+      template:
+        src: grafana-datasources.yml.j2
+        dest: /etc/grafana/provisioning/datasources/prometheus.yml
+        owner: grafana
+        group: grafana
+        mode: '0644'
+      notify: restart grafana
+
+    - name: Import Health-InfraOps dashboards
+      template:
+        src: "{{ item }}"
+        dest: "/etc/grafana/provisioning/dashboards/{{ item | basename }}"
+        owner: grafana
+        group: grafana
+        mode: '0644'
+      loop: "{{ lookup('fileglob', 'dashboards/*.json') }}"
+      notify: restart grafana
+
+    - name: Configure monitoring firewall rules
+      ufw:
+        rule: "{{ item.rule }}"
+        port: "{{ item.port }}"
+        proto: tcp
+      loop:
+        - { rule: allow, port: 9090, comment: "Prometheus" }
+        - { rule: allow, port: 3000, comment: "Grafana" }
+        - { rule: allow, port: 9100, comment: "Node Exporter" }
+      when: firewall_enabled | bool
+
+    - name: Setup monitoring backups
+      cron:
+        name: "Backup monitoring data"
+        job: "tar -czf /backup/monitoring/prometheus-$(date +%Y%m%d).tar.gz /var/lib/prometheus/"
+        minute: "0"
+        hour: "2"
+        user: prometheus
+
+  handlers:
+    - name: restart prometheus
+      systemd:
+        name: prometheus
+        state: restarted
+
+    - name: reload prometheus
+      systemd:
+        name: prometheus
+        state: reloaded
+
+    - name: restart grafana
+      systemd:
+        name: grafana-server
+        state: restarted
+
+- name: Deploy Monitoring Agents
+  hosts: "production:!monitoring_servers"
+  become: yes
+  vars_files:
+    - "../group_vars/all.yml"
+
+  tasks:
+    - name: Install node exporter
+      apt:
+        name: prometheus-node-exporter
+        state: present
+      notify: restart node-exporter
+
+    - name: Configure node exporter
+      template:
+        src: node-exporter.j2
+        dest: /etc/default/prometheus-node-exporter
+      notify: restart node-exporter
+
+    - name: Install MySQL exporter (database servers)
+      apt:
+        name: prometheus-mysqld-exporter
+        state: present
+      when: "'db_servers' in group_names"
+      notify: restart mysqld-exporter
+
+    - name: Configure MySQL exporter
+      template:
+        src: mysqld-exporter.j2
+        dest: /etc/default/prometheus-mysqld-exporter
+      when: "'db_servers' in group_names"
+      notify: restart mysqld-exporter
+
+    - name: Setup application metrics endpoint
+      template:
+        src: metrics-endpoint.j2
+        dest: "{{ app_install_dir }}/routes/metrics.js"
+      when: "'app_servers' in group_names"
+      notify: restart application
+
+  handlers:
+    - name: restart node-exporter
+      systemd:
+        name: prometheus-node-exporter
+        state: restarted
+
+    - name: restart mysqld-exporter
+      systemd:
+        name: prometheus-mysqld-exporter
+        state: restarted
+
+- name: Configure Alerting
+  hosts: monitoring_servers
+  become: yes
+
+  tasks:
+    - name: Deploy Alertmanager configuration
+      template:
+        src: alertmanager.yml.j2
+        dest: /etc/prometheus/alertmanager.yml
+        owner: prometheus
+        group: prometheus
+        mode: '0644'
+      notify: restart alertmanager
+
+    - name: Setup alert notifications
+      template:
+        src: alerts/notifications.j2
+        dest: /etc/prometheus/alert-templates/health-infraops.tmpl
+        owner: prometheus
+        group: prometheus
+        mode: '0644'
+
+    - name: Test alert configuration
+      command: promtool check rules /etc/prometheus/rules/health-infraops-alerts.yml
+      register: promtool_check
+      failed_when: promtool_check.rc != 0
+
+  handlers:
+    - name: restart alertmanager
+      systemd:
+        name: alertmanager
+        state: restarted
+
+- name: Verify Monitoring Stack
+  hosts: monitoring_servers
+  become: yes
+
+  tasks:
+    - name: Check Prometheus status
+      uri:
+        url: http://localhost:9090/-/healthy
+        method: GET
+        status_code: 200
+      register: prometheus_health
+
+    - name: Check Grafana status
+      uri:
+        url: http://localhost:3000/api/health
+        method: GET
+        status_code: 200
+        body_format: json
+      register: grafana_health
+
+    - name: Verify metrics collection
+      uri:
+        url: http://localhost:9090/api/v1/query?query=up
+        method: GET
+        status_code: 200
+        body_format: json
+      register: metrics_query
+
+    - name: Record monitoring setup
+      lineinfile:
+        path: "/var/log/health-infraops-monitoring.log"
+        line: "{{ ansible_date_time.iso8601 }} - Monitoring stack deployed - Prometheus: {{ prometheus_health.status }}, Grafana: {{ grafana_health.status }}"
+        create: yes

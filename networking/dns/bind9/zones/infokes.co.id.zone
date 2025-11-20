@@ -1,0 +1,98 @@
+; Health-InfraOps DNS Zone File
+; Infokes Healthcare System - infokes.co.id
+; 
+; This file contains both internal and external DNS records
+
+$TTL    86400
+$ORIGIN infokes.co.id.
+
+@       IN      SOA     ns1.infokes.co.id. admin.infokes.co.id. (
+                        2023101501  ; Serial (YYYYMMDD##)
+                        28800       ; Refresh (8 hours)
+                        7200        ; Retry (2 hours)
+                        604800      ; Expire (1 week)
+                        86400       ; Minimum TTL (1 day)
+                        )
+
+; Name Servers
+@       IN      NS      ns1.infokes.co.id.
+@       IN      NS      ns2.infokes.co.id.
+
+; Mail Exchange
+@       IN      MX      10 mail.infokes.co.id.
+
+; Top Level Records
+@       IN      A       10.0.30.10    ; Main website (load balancer)
+www     IN      A       10.0.30.10    ; WWW alias
+app     IN      A       10.0.30.10    ; Application
+api     IN      A       10.0.30.10    ; API endpoint
+monitor IN      A       10.0.40.41    ; Monitoring dashboard
+db      IN      A       10.0.20.21    ; Database (internal only)
+
+; Name Servers
+ns1     IN      A       10.0.40.42    ; Primary DNS
+ns2     IN      A       10.0.40.43    ; Secondary DNS
+
+; Mail Server
+mail    IN      A       10.0.30.15    ; Mail server (if applicable)
+
+; Load Balancers
+lb-01   IN      A       10.0.30.10    ; Primary load balancer
+lb-02   IN      A       10.0.30.11    ; Secondary load balancer
+
+; Application Servers (Production VLAN 10)
+app-01  IN      A       10.0.10.11
+app-02  IN      A       10.0.10.12
+app-03  IN      A       10.0.10.13
+app-04  IN      A       10.0.10.14
+
+; API Servers
+api-01  IN      A       10.0.10.15
+api-02  IN      A       10.0.10.16
+api-03  IN      A       10.0.10.17
+
+; Static Content Servers
+static-01 IN    A       10.0.10.19
+static-02 IN    A       10.0.10.20
+
+; Database Servers (Database VLAN 20)
+db-mysql-01 IN  A       10.0.20.21    ; MySQL Primary
+db-mysql-02 IN  A       10.0.20.22    ; MySQL Secondary
+db-pg-01   IN   A       10.0.20.23    ; PostgreSQL Primary
+db-pg-02   IN   A       10.0.20.24    ; PostgreSQL Secondary
+db-mongo-01 IN  A       10.0.20.25    ; MongoDB Primary
+db-mongo-02 IN  A       10.0.20.26    ; MongoDB Secondary
+
+; Monitoring Servers (Management VLAN 40)
+mon-01  IN      A       10.0.40.41    ; Monitoring server
+grafana IN      A       10.0.40.41    ; Grafana dashboard
+prometheus IN   A       10.0.40.41    ; Prometheus
+zabbix  IN      A       10.0.40.41    ; Zabbix server
+
+; Backup Servers (Backup VLAN 50)
+backup-01 IN    A       10.0.50.10    ; Backup server
+nfs-01   IN     A       10.0.50.11    ; NFS server
+ceph-01  IN     A       10.0.50.12    ; Ceph monitor 1
+ceph-02  IN     A       10.0.50.13    ; Ceph monitor 2
+ceph-03  IN     A       10.0.50.14    ; Ceph monitor 3
+
+; Service Discovery (SRV Records)
+_http._tcp      IN      SRV     10 60 80 www.infokes.co.id.
+_https._tcp     IN      SRV     10 60 443 www.infokes.co.id.
+_api._tcp       IN      SRV     10 60 443 api.infokes.co.id.
+_mysql._tcp     IN      SRV     10 60 3306 db-mysql-01.infokes.co.id.
+_postgresql._tcp IN     SRV     10 60 5432 db-pg-01.infokes.co.id.
+_mongodb._tcp   IN      SRV     10 60 27017 db-mongo-01.infokes.co.id.
+
+; TXT Records
+@       IN      TXT     "v=spf1 mx a ~all"
+_dmarc  IN      TXT     "v=DMARC1; p=quarantine; rua=mailto:dmarc@infokes.co.id"
+
+; CAA Records
+@       IN      CAA     0 issue "letsencrypt.org"
+@       IN      CAA     0 issuewild ";"
+
+; Wildcard for subdomains
+*       IN      A       10.0.30.10    ; Catch-all to load balancer
+
+; PTR Records (Reverse DNS) are in separate zone files

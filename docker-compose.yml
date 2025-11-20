@@ -1,0 +1,59 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./networking/load-balancer/nginx-lb/nginx-lb.conf:/etc/nginx/nginx.conf
+      - ./security/ssl-certificates:/etc/ssl/certs
+    networks:
+      - infokes-network
+
+  app:
+    image: node:18-alpine
+    working_dir: /app
+    volumes:
+      - ./servers/app-servers/nodejs/app:/app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=postgres
+    depends_on:
+      - postgres
+    networks:
+      - infokes-network
+
+  postgres:
+    image: postgres:14
+    environment:
+      - POSTGRES_DB=infokes
+      - POSTGRES_USER=infokes_user
+      - POSTGRES_PASSWORD=secure_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./servers/database/postgresql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - infokes-network
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+    volumes:
+      - ./servers/monitoring/grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - infokes-network
+
+volumes:
+  postgres_data:
+
+networks:
+  infokes-network:
+    driver: bridge

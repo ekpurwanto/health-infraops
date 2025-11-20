@@ -1,0 +1,208 @@
+# Health-InfraOps Fail2Ban Configuration
+# Infokes Healthcare System - Intrusion Prevention
+
+[DEFAULT]
+# Base configuration
+bantime = 3600
+findtime = 600
+maxretry = 3
+backend = auto
+usedns = warn
+logencoding = auto
+enabled = false
+mode = normal
+filter = %(__name__)s
+destemail = security@infokes.co.id
+sender = fail2ban@infokes.co.id
+mta = sendmail
+protocol = tcp
+chain = INPUT
+port = 0:65535
+fail2ban_agent = Health-InfraOps Fail2Ban
+action = %(action_)s
+
+# Health-InfraOps specific actions
+action_health_infraops = %(banaction)s[port="%(port)s", protocol="%(protocol)s", chain="%(chain)s"]
+                      %(mta)s-whois-lines[name=%(__name__)s, dest="%(destemail)s", logpath=%(logpath)s, chain="%(chain)s"]
+                      health-infraops-log[name=%(__name__)s, logpath=%(logpath)s]
+
+[sshd]
+# SSH protection
+enabled = true
+port = 2222
+filter = sshd
+logpath = /var/log/auth.log
+maxretry = 3
+bantime = 86400
+findtime = 600
+ignoreip = 10.0.40.0/24 127.0.0.1/8
+
+[sshd-ddos]
+# SSH DDoS protection
+enabled = true
+port = 2222
+filter = sshd-ddos
+logpath = /var/log/auth.log
+maxretry = 10
+bantime = 86400
+findtime = 3600
+
+[nginx-http-auth]
+# Nginx authentication failures
+enabled = true
+port = http,https
+filter = nginx-http-auth
+logpath = /var/log/nginx/error.log
+maxretry = 3
+bantime = 3600
+
+[nginx-limit-req]
+# Nginx rate limiting
+enabled = true
+port = http,https
+filter = nginx-limit-req
+logpath = /var/log/nginx/access.log
+maxretry = 10
+bantime = 3600
+findtime = 600
+
+[nginx-botsearch]
+# Bad bot protection
+enabled = true
+port = http,https
+filter = nginx-botsearch
+logpath = /var/log/nginx/access.log
+maxretry = 5
+bantime = 86400
+findtime = 3600
+
+[haproxy-http-auth]
+# HAProxy authentication
+enabled = true
+port = http,https
+filter = haproxy-http-auth
+logpath = /var/log/haproxy.log
+maxretry = 3
+bantime = 3600
+
+[mysql-auth]
+# MySQL authentication failures
+enabled = true
+port = 3306
+filter = mysql-auth
+logpath = /var/log/mysql/error.log
+maxretry = 3
+bantime = 86400
+ignoreip = 10.0.10.0/24 10.0.20.0/24
+
+[postgresql]
+# PostgreSQL authentication
+enabled = true
+port = 5432
+filter = postgresql
+logpath = /var/log/postgresql/postgresql-*.log
+maxretry = 3
+bantime = 86400
+ignoreip = 10.0.10.0/24 10.0.20.0/24
+
+[recidive]
+# Repeat offender ban
+enabled = true
+filter = recidive
+logpath = /var/log/fail2ban.log
+action = iptables-allports[name=recidive]
+         sendmail-whois-lines[name=recidive, logpath=/var/log/fail2ban.log]
+bantime = 604800  ; 1 week
+findtime = 86400 ; 1 day
+maxretry = 3
+
+[health-infraops-api]
+# Custom API protection
+enabled = true
+port = http,https
+filter = health-infraops-api
+logpath = /var/log/nginx/api-access.log
+maxretry = 10
+bantime = 3600
+findtime = 300
+
+[wordpress-auth]
+# WordPress login protection
+enabled = true
+port = http,https
+filter = wordpress-auth
+logpath = /var/log/nginx/wordpress.log
+maxretry = 5
+bantime = 3600
+
+# Health-InfraOps specific jails
+[port-scan]
+enabled = true
+filter = portscan
+logpath = /var/log/fail2ban.log
+maxretry = 1
+bantime = 86400
+findtime = 600
+
+[ssh-blocklist]
+enabled = true
+filter = sshd
+logpath = /var/log/auth.log
+maxretry = 2
+bantime = 31536000  ; 1 year
+findtime = 3600
+ignorecommand = /usr/bin/health-infraops-ip-check %(ip)s
+
+# Database specific protections
+[mysql-nopassword]
+enabled = true
+filter = mysql-nopassword
+logpath = /var/log/mysql/error.log
+maxretry = 1
+bantime = 86400
+
+# Monitoring system protection
+[prometheus-scrape]
+enabled = true
+port = 9090
+filter = prometheus-scrape
+logpath = /var/log/prometheus/access.log
+maxretry = 10
+bantime = 3600
+ignoreip = 10.0.40.0/24
+
+[grafana-auth]
+enabled = true
+port = 3000
+filter = grafana-auth
+logpath = /var/log/grafana/grafana.log
+maxretry = 5
+bantime = 3600
+ignoreip = 10.0.40.0/24
+
+# Backup system protection
+[rsync-auth]
+enabled = true
+port = 873
+filter = rsync-auth
+logpath = /var/log/rsync.log
+maxretry = 3
+bantime = 86400
+ignoreip = 10.0.50.0/24
+
+# Custom actions for Health-InfraOps
+[action_health_infraops_log]
+action = iptables-multiport[name=%(__name__)s, port="%(port)s", protocol="%(protocol)s", chain="%(chain)s"]
+         %(mta)s-whois-lines[name=%(__name__)s, dest="%(destemail)s", logpath=%(logpath)s, chain="%(chain)s"]
+         health-infraops-log[name=%(__name__)s, logpath=%(logpath)s]
+
+# High-security jails for critical services
+[ssh-high-security]
+enabled = true
+port = 2222
+filter = sshd
+logpath = /var/log/auth.log
+maxretry = 2
+bantime = 2592000  ; 30 days
+findtime = 300
+ignoreip = 10.0.40.0/24

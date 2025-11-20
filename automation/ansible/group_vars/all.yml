@@ -1,0 +1,166 @@
+---
+# Health-InfraOps Global Variables
+# Common configuration for all environments
+
+# System Configuration
+ansible_python_interpreter: /usr/bin/python3
+timezone: Asia/Jakarta
+locale: en_US.UTF-8
+
+# Network Configuration
+domain: infokes.co.id
+internal_domain: infokes.local
+
+# VLAN Configuration
+vlans:
+  production: "10.0.10.0/24"
+  database: "10.0.20.0/24"
+  dmz: "10.0.30.0/24"
+  management: "10.0.40.0/24"
+  backup: "10.0.50.0/24"
+
+# User Management
+system_user: admin
+system_group: admin
+app_user: infokes
+app_group: infokes
+
+# Application Configuration
+app_name: infokes
+app_version: "1.0.0"
+app_install_dir: /opt/infokes
+app_log_dir: /var/log/infokes
+app_data_dir: /var/lib/infokes
+app_port: 3000
+api_port: 8000
+
+# Repository Configuration
+app_repository: "https://github.com/ekpurwanto/health-infraops.git"
+app_repository_key: "~/.ssh/health-infraops-deploy.key"
+
+# Database Configuration
+mysql_root_password: "{{ vault_mysql_root_password }}"
+mysql_backup_password: "{{ vault_mysql_backup_password }}"
+postgres_password: "{{ vault_postgres_password }}"
+mongodb_password: "{{ vault_mongodb_password }}"
+
+# SSL Configuration
+ssl_enabled: true
+ssl_cert_path: /etc/ssl/certs
+ssl_key_path: /etc/ssl/private
+ssl_country: ID
+ssl_state: Jakarta
+ssl_locality: Jakarta
+ssl_organization: "Health-InfraOps"
+ssl_organizational_unit: "IT Department"
+
+# Monitoring Configuration
+monitoring_enabled: true
+prometheus_port: 9090
+grafana_port: 3000
+alertmanager_port: 9093
+
+# Backup Configuration
+backup_enabled: true
+backup_root: /backup
+backup_retention_days: 30
+backup_retention_weeks: 4
+backup_retention_months: 12
+
+# Security Configuration
+firewall_enabled: true
+ssh_port: 2222
+fail2ban_enabled: true
+auditd_enabled: true
+
+# Notification Configuration
+smtp_host: smtp.infokes.co.id
+smtp_port: 587
+deployment_notification_emails:
+  - admin@infokes.co.id
+  - devops@infokes.co.id
+security_notification_emails:
+  - security@infokes.co.id
+  - admin@infokes.co.id
+backup_notification_emails:
+  - backup@infokes.co.id
+  - admin@infokes.co.id
+
+# Firewall Rules
+vlan_firewall_rules:
+  - { rule: allow, src: "10.0.40.0/24", port: "2222", comment: "SSH from management" }
+  - { rule: allow, src: "10.0.30.0/24", port: "3000", comment: "App from load balancer" }
+  - { rule: allow, src: "10.0.10.0/24", port: "3306", comment: "MySQL from app servers" }
+  - { rule: allow, src: "10.0.10.0/24", port: "5432", comment: "PostgreSQL from app servers" }
+  - { rule: allow, src: "10.0.40.0/24", port: "9090", comment: "Prometheus from monitoring" }
+
+# Application Firewall Rules
+app_firewall_rules:
+  - { rule: allow, port: "80", proto: "tcp", comment: "HTTP" }
+  - { rule: allow, port: "443", proto: "tcp", comment: "HTTPS" }
+  - { rule: allow, port: "3000", proto: "tcp", comment: "Application" }
+  - { rule: allow, port: "8000", proto: "tcp", comment: "API" }
+
+# Package Configuration
+system_packages:
+  - curl
+  - wget
+  - git
+  - vim
+  - htop
+  - net-tools
+  - ufw
+  - fail2ban
+  - auditd
+  - lynis
+
+# Service Configuration
+services_enabled:
+  - ssh
+  - nginx
+  - mysql
+  - postgresql
+  - prometheus
+  - grafana
+
+services_disabled:
+  - avahi-daemon
+  - cups
+  - rpcbind
+
+# Performance Tuning
+sysctl_settings:
+  net.ipv4.tcp_fin_timeout: 30
+  net.ipv4.tcp_keepalive_time: 300
+  net.ipv4.tcp_syncookies: 1
+  net.ipv4.ip_forward: 0
+  net.ipv4.conf.all.send_redirects: 0
+  net.ipv4.conf.default.send_redirects: 0
+
+# Health Check Configuration
+health_check_endpoints:
+  - path: "/health"
+    expected_status: 200
+  - path: "/api/health"
+    expected_status: 200
+  - path: "/metrics"
+    expected_status: 200
+
+# Backup Servers
+backup_servers:
+  - backup-01.infokes.co.id
+backup_server: backup-01.infokes.co.id
+
+# Monitoring Servers
+monitoring_servers:
+  - mon-01.infokes.co.id
+
+# Load Balancer Configuration
+load_balancers:
+  - lb-01.infokes.co.id
+  - lb-02.infokes.co.id
+
+# Deployment Configuration
+deployment_approval: "approved"
+deployment_notifications_enabled: true
+rollback_enabled: true

@@ -1,0 +1,20 @@
+# Health-InfraOps Weekly Backup Schedule
+# Runs full backups weekly with comprehensive verification
+
+# Full backup every Sunday at 1:00 AM
+0 1 * * 0 /opt/health-infraops/backups/scripts/full-backup.sh --environment prod --encrypt --verify --upload-cloud --retention 30 >> /var/log/health-infraops/backup-full.log 2>&1
+
+# Comprehensive verification every Sunday at 3:00 AM
+0 3 * * 0 /opt/health-infraops/backups/scripts/verify-backup.sh --type all --check-integrity --test-restore --html-report --email-report >> /var/log/health-infraops/verify-weekly.log 2>&1
+
+# Infrastructure configuration backup every Saturday at 2:00 AM
+0 2 * * 6 /opt/health-infraops/backups/scripts/full-backup.sh --environment prod --encrypt --upload-cloud >> /var/log/health-infraops/backup-infra.log 2>&1
+
+# Backup integrity deep check every Friday at 4:00 AM
+0 4 * * 5 /opt/health-infraops/backups/scripts/verify-backup.sh --type full --check-encryption --check-integrity --test-restore >> /var/log/health-infraops/verify-deep.log 2>&1
+
+# Backup cleanup and retention enforcement every Sunday at 5:00 AM
+0 5 * * 0 find /opt/health-infraops/backups/data -name "*.gz" -type f -mtime +30 -delete >> /var/log/health-infraops/cleanup-weekly.log 2>&1
+
+# Backup report generation every Monday at 9:00 AM
+0 9 * * 1 /opt/health-infraops/backups/scripts/verify-backup.sh --type all --html-report --email-report >> /var/log/health-infraops/report-weekly.log 2>&1

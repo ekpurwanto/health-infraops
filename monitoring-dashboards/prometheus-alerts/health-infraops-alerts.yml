@@ -1,0 +1,441 @@
+# Health-InfraOps Prometheus Alerting Rules
+# Comprehensive alerting for healthcare infrastructure
+
+groups:
+  # Infrastructure Alerts
+  - name: infrastructure.rules
+    rules:
+      # Node/Server Alerts
+      - alert: NodeDown
+        expr: up{job=~"node.*"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          category: infrastructure
+          team: infrastructure
+        annotations:
+          summary: "Node {{ $labels.instance }} is down"
+          description: "Node {{ $labels.instance }} has been down for more than 2 minutes."
+          impact: "Services running on this node may be unavailable"
+          action: "Check node status and network connectivity"
+
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          category: infrastructure
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is above 80% for more than 5 minutes on {{ $labels.instance }}"
+          action: "Check running processes and consider scaling"
+
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          category: infrastructure
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is above 90% for more than 5 minutes on {{ $labels.instance }}"
+          action: "Check memory usage and consider adding more RAM"
+
+      - alert: DiskSpaceCritical
+        expr: (1 - (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes)) * 100 > 90
+        for: 2m
+        labels:
+          severity: critical
+          category: infrastructure
+        annotations:
+          summary: "Disk space critical on {{ $labels.instance }}"
+          description: "Disk usage on {{ $labels.mountpoint }} is above 90% on {{ $labels.instance }}"
+          action: "Clean up disk space or expand storage"
+
+      - alert: DiskSpaceWarning
+        expr: (1 - (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes)) * 100 > 80
+        for: 10m
+        labels:
+          severity: warning
+          category: infrastructure
+        annotations:
+          summary: "Disk space warning on {{ $labels.instance }}"
+          description: "Disk usage on {{ $labels.mountpoint }} is above 80% on {{ $labels.instance }}"
+          action: "Monitor disk usage and plan cleanup"
+
+      - alert: HighLoadAverage
+        expr: node_load5 / count without (cpu, mode) (node_cpu_seconds_total{mode="system"}) > 2
+        for: 5m
+        labels:
+          severity: warning
+          category: infrastructure
+        annotations:
+          summary: "High load average on {{ $labels.instance }}"
+          description: "Load average is 2x the number of CPUs for more than 5 minutes on {{ $labels.instance }}"
+          action: "Check for resource-intensive processes"
+
+  # Database Alerts
+  - name: database.rules
+    rules:
+      # MySQL Alerts
+      - alert: MySQLDown
+        expr: mysql_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: database
+          team: database
+        annotations:
+          summary: "MySQL is down on {{ $labels.instance }}"
+          description: "MySQL database is not responding on {{ $labels.instance }}"
+          impact: "Applications may be unable to access data"
+          action: "Check MySQL service status and logs"
+
+      - alert: MySQLSlowQueries
+        expr: rate(mysql_global_status_slow_queries[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          category: database
+        annotations:
+          summary: "High number of slow queries on MySQL {{ $labels.instance }}"
+          description: "More than 0.1 slow queries per second detected on {{ $labels.instance }}"
+          action: "Review slow query log and optimize queries"
+
+      - alert: MySQLHighConnections
+        expr: mysql_global_status_threads_connected / mysql_global_variables_max_connections > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          category: database
+        annotations:
+          summary: "High connection usage on MySQL {{ $labels.instance }}"
+          description: "Connection usage is above 80% on {{ $labels.instance }}"
+          action: "Consider increasing max_connections or optimizing connection usage"
+
+      - alert: MySQLReplicationLag
+        expr: mysql_slave_status_seconds_behind_master > 30
+        for: 2m
+        labels:
+          severity: critical
+          category: database
+        annotations:
+          summary: "MySQL replication lag on {{ $labels.instance }}"
+          description: "Replication lag is more than 30 seconds on {{ $labels.instance }}"
+          action: "Check replication status and network connectivity"
+
+      # MongoDB Alerts
+      - alert: MongoDBDown
+        expr: mongodb_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: database
+        annotations:
+          summary: "MongoDB is down on {{ $labels.instance }}"
+          description: "MongoDB database is not responding on {{ $labels.instance }}"
+          action: "Check MongoDB service status and logs"
+
+      - alert: MongoDBHighConnections
+        expr: mongodb_connections_current / mongodb_connections_available > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          category: database
+        annotations:
+          summary: "High connection usage on MongoDB {{ $labels.instance }}"
+          description: "Connection usage is above 80% on {{ $labels.instance }}"
+          action: "Monitor connections and consider scaling"
+
+  # Web Server Alerts
+  - name: webserver.rules
+    rules:
+      - alert: NginxDown
+        expr: nginx_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: webserver
+          team: infrastructure
+        annotations:
+          summary: "Nginx is down on {{ $labels.instance }}"
+          description: "Nginx web server is not responding on {{ $labels.instance }}"
+          impact: "Web services may be unavailable"
+          action: "Check Nginx service status and configuration"
+
+      - alert: NginxHighErrorRate
+        expr: rate(nginx_http_requests_total{status=~"5.."}[5m]) / rate(nginx_http_requests_total[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+          category: webserver
+        annotations:
+          summary: "High error rate on Nginx {{ $labels.instance }}"
+          description: "5xx error rate is above 5% on {{ $labels.instance }}"
+          action: "Check application backend and Nginx error logs"
+
+      - alert: NginxHighLatency
+        expr: histogram_quantile(0.95, rate(nginx_http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          category: webserver
+        annotations:
+          summary: "High latency on Nginx {{ $labels.instance }}"
+          description: "95th percentile request latency is above 2 seconds on {{ $labels.instance }}"
+          action: "Investigate backend performance and network issues"
+
+  # Application Alerts
+  - name: application.rules
+    rules:
+      - alert: NodeAppDown
+        expr: nodejs_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: application
+          team: application
+        annotations:
+          summary: "Node.js application is down on {{ $labels.instance }}"
+          description: "Health check endpoint is not responding on {{ $labels.instance }}"
+          impact: "Application services are unavailable"
+          action: "Check application logs and process status"
+
+      - alert: NodeAppHighMemory
+        expr: nodejs_memory_usage_bytes / nodejs_memory_limit_bytes > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          category: application
+        annotations:
+          summary: "High memory usage in Node.js application on {{ $labels.instance }}"
+          description: "Memory usage is above 80% on {{ $labels.instance }}"
+          action: "Check for memory leaks and consider scaling"
+
+      - alert: NodeAppHighCPU
+        expr: rate(nodejs_cpu_usage_seconds_total[5m]) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          category: application
+        annotations:
+          summary: "High CPU usage in Node.js application on {{ $labels.instance }}"
+          description: "CPU usage is above 80% on {{ $labels.instance }}"
+          action: "Profile application and optimize resource usage"
+
+      - alert: HighApplicationErrorRate
+        expr: rate(nodejs_exceptions_total[5m]) > 1
+        for: 2m
+        labels:
+          severity: warning
+          category: application
+        annotations:
+          summary: "High error rate in application on {{ $labels.instance }}"
+          description: "More than 1 exception per second detected on {{ $labels.instance }}"
+          action: "Review application logs and error tracking"
+
+  # Network Alerts
+  - name: network.rules
+    rules:
+      - alert: HighNetworkErrors
+        expr: rate(node_network_receive_errs_total[5m]) + rate(node_network_transmit_errs_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          category: network
+          team: infrastructure
+        annotations:
+          summary: "High network errors on {{ $labels.instance }}"
+          description: "Network error rate is high on interface {{ $labels.device }}"
+          action: "Check network hardware and driver issues"
+
+      - alert: HighNetworkUtilization
+        expr: (rate(node_network_receive_bytes_total[5m]) + rate(node_network_transmit_bytes_total[5m])) / 125000 > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          category: network
+        annotations:
+          summary: "High network utilization on {{ $labels.instance }}"
+          description: "Network utilization is above 80% on interface {{ $labels.device }}"
+          action: "Monitor traffic patterns and consider network upgrade"
+
+  # Storage Alerts
+  - name: storage.rules
+    rules:
+      - alert: CephHealthError
+        expr: ceph_health_status > 1
+        for: 1m
+        labels:
+          severity: critical
+          category: storage
+          team: infrastructure
+        annotations:
+          summary: "Ceph cluster health is in ERROR state"
+          description: "Ceph cluster health status is {{ $value }}"
+          impact: "Storage operations may be affected"
+          action: "Check Ceph cluster status and OSD health"
+
+      - alert: CephOSDDown
+        expr: ceph_osd_up == 0
+        for: 2m
+        labels:
+          severity: critical
+          category: storage
+        annotations:
+          summary: "Ceph OSD {{ $labels.osd }} is down"
+          description: "Ceph OSD {{ $labels.osd }} has been down for more than 2 minutes"
+          action: "Check OSD service and hardware status"
+
+      - alert: CephNearFull
+        expr: ceph_cluster_total_used_bytes / ceph_cluster_total_bytes > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          category: storage
+        annotations:
+          summary: "Ceph cluster is near full"
+          description: "Ceph cluster usage is above 80%"
+          action: "Add more OSDs or clean up data"
+
+  # Backup Alerts
+  - name: backup.rules
+    rules:
+      - alert: BackupFailed
+        expr: health_infraops_backup_success == 0
+        for: 0m
+        labels:
+          severity: critical
+          category: backup
+          team: infrastructure
+        annotations:
+          summary: "Backup failed on {{ $labels.job }}"
+          description: "Backup job {{ $labels.job }} failed to complete successfully"
+          impact: "Data may not be protected"
+          action: "Check backup logs and storage availability"
+
+      - alert: BackupTooOld
+        expr: time() - health_infraops_backup_last_success_timestamp_seconds > 86400
+        for: 0m
+        labels:
+          severity: warning
+          category: backup
+        annotations:
+          summary: "Backup is too old on {{ $labels.job }}"
+          description: "No successful backup in the last 24 hours for {{ $labels.job }}"
+          action: "Investigate backup scheduling and execution"
+
+  # Security Alerts
+  - name: security.rules
+    rules:
+      - alert: HighFailedLoginAttempts
+        expr: rate(ssh_failed_login_attempts_total[10m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+          category: security
+          team: security
+        annotations:
+          summary: "High failed login attempts on {{ $labels.instance }}"
+          description: "More than 5 failed login attempts per minute detected"
+          action: "Check for brute force attacks and review security logs"
+
+      - alert: PortScanDetected
+        expr: rate(firewall_dropped_packets_total[5m]) > 100
+        for: 1m
+        labels:
+          severity: warning
+          category: security
+        annotations:
+          summary: "Possible port scan detected on {{ $labels.instance }}"
+          description: "High rate of dropped packets by firewall"
+          action: "Review firewall logs and network traffic"
+
+  # Certificate Alerts
+  - name: certificate.rules
+    rules:
+      - alert: SSLCertExpiringSoon
+        expr: ssl_certificate_expiry_seconds < 86400 * 7
+        for: 0m
+        labels:
+          severity: warning
+          category: security
+        annotations:
+          summary: "SSL certificate expiring soon for {{ $labels.domain }}"
+          description: "SSL certificate for {{ $labels.domain }} expires in {{ $value | humanizeDuration }}"
+          action: "Renew SSL certificate"
+
+      - alert: SSLCertExpired
+        expr: ssl_certificate_expiry_seconds < 0
+        for: 0m
+        labels:
+          severity: critical
+          category: security
+        annotations:
+          summary: "SSL certificate expired for {{ $labels.domain }}"
+          description: "SSL certificate for {{ $labels.domain }} has expired"
+          action: "Immediately renew SSL certificate"
+
+  # Custom Health InfraOps Alerts
+  - name: health_infraops.rules
+    rules:
+      - alert: DeploymentFailed
+        expr: health_infraops_deployment_status == 0
+        for: 0m
+        labels:
+          severity: critical
+          category: deployment
+          team: infrastructure
+        annotations:
+          summary: "Deployment failed for {{ $labels.environment }}"
+          description: "Deployment to {{ $labels.environment }} environment failed"
+          action: "Check deployment logs and rollback if necessary"
+
+      - alert: HighInfraAutomationErrors
+        expr: rate(health_infraops_automation_errors_total[10m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+          category: automation
+        annotations:
+          summary: "High infrastructure automation errors"
+          description: "More than 1 automation error per minute detected"
+          action: "Review automation scripts and Terraform runs"
+
+      - alert: DRTestRequired
+        expr: time() - health_infraops_dr_last_test_timestamp_seconds > 2592000
+        for: 0m
+        labels:
+          severity: warning
+          category: disaster_recovery
+        annotations:
+          summary: "Disaster recovery test overdue"
+          description: "No DR test performed in the last 30 days"
+          action: "Schedule and execute disaster recovery test"
+
+  # Business Metrics Alerts
+  - name: business.rules
+    rules:
+      - alert: HighPatientAPILatency
+        expr: histogram_quantile(0.95, rate(patient_api_request_duration_seconds_bucket[5m])) > 5
+        for: 5m
+        labels:
+          severity: critical
+          category: business
+          team: application
+        annotations:
+          summary: "High latency in Patient API"
+          description: "95th percentile latency for Patient API is above 5 seconds"
+          impact: "Patient experience may be degraded"
+          action: "Investigate API performance and database queries"
+
+      - alert: MedicalRecordSyncDelayed
+        expr: health_infraops_medical_record_sync_delay_seconds > 300
+        for: 5m
+        labels:
+          severity: warning
+          category: business
+        annotations:
+          summary: "Medical record synchronization delayed"
+          description: "Medical record synchronization is delayed by more than 5 minutes"
+          action: "Check synchronization service and network connectivity"

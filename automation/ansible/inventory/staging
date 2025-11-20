@@ -1,0 +1,51 @@
+# Health-InfraOps Staging Inventory
+# Infokes Healthcare System - Staging Environment
+
+[all:vars]
+ansible_user=admin
+ansible_ssh_private_key_file=~/.ssh/health-infraops-admin.key
+ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+ansible_python_interpreter=/usr/bin/python3
+
+# Staging Load Balancer
+[load_balancers]
+staging-lb.infokes.co.id ansible_host=10.0.60.10
+
+[load_balancers:vars]
+ansible_ssh_port=2222
+service_type=load_balancer
+
+# Staging Application Servers
+[app_servers]
+staging-app-01.infokes.co.id ansible_host=10.0.60.11
+staging-app-02.infokes.co.id ansible_host=10.0.60.12
+
+[app_servers:vars]
+ansible_ssh_port=2222
+service_type=application
+app_environment=staging
+
+# Staging Database Servers
+[db_servers]
+staging-db.infokes.co.id ansible_host=10.0.60.20
+
+[db_servers:vars]
+ansible_ssh_port=2222
+service_type=database
+
+# Service Groups
+[web_servers:children]
+load_balancers
+app_servers
+
+[staging:children]
+web_servers
+db_servers
+
+# Variables for staging
+[staging:vars]
+environment=staging
+domain=staging.infokes.co.id
+ssl_enabled=true
+backup_enabled=false
+monitoring_enabled=true

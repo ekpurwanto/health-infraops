@@ -1,0 +1,144 @@
+---
+# Health-InfraOps Database Servers Configuration
+# MySQL, PostgreSQL, and MongoDB specific variables
+
+# MySQL Configuration
+mysql_version: "8.0"
+mysql_port: 3306
+mysql_bind_address: "0.0.0.0"
+mysql_datadir: "/var/lib/mysql"
+mysql_socket: "/var/run/mysqld/mysqld.sock"
+
+mysql_config:
+  innodb_buffer_pool_size: "4G"
+  innodb_log_file_size: "512M"
+  max_connections: 500
+  query_cache_size: "64M"
+  slow_query_log: 1
+  long_query_time: 2
+
+mysql_users:
+  - name: infokes_user
+    host: "10.0.10.0/24"
+    password: "{{ vault_mysql_app_password }}"
+    priv: "infokes.*:ALL"
+  - name: backup_user
+    host: "10.0.50.0/24"
+    password: "{{ vault_mysql_backup_password }}"
+    priv: "*.*:SELECT,RELOAD,LOCK TABLES,REPLICATION CLIENT"
+
+mysql_databases:
+  - name: infokes
+    encoding: utf8mb4
+    collation: utf8mb4_unicode_ci
+
+# PostgreSQL Configuration
+postgresql_version: "14"
+postgresql_port: 5432
+postgresql_data_directory: "/var/lib/postgresql/14/main"
+
+postgresql_config:
+  max_connections: 200
+  shared_buffers: "1GB"
+  effective_cache_size: "3GB"
+  work_mem: "8MB"
+  maintenance_work_mem: "256MB"
+
+postgresql_users:
+  - name: infokes_user
+    password: "{{ vault_postgres_app_password }}"
+    role_attr_flags: "LOGIN"
+  - name: backup_user
+    password: "{{ vault_postgres_backup_password }}"
+    role_attr_flags: "LOGIN"
+
+postgresql_databases:
+  - name: infokes
+    owner: infokes_user
+    encoding: UTF8
+    template: template0
+
+# MongoDB Configuration
+mongodb_version: "5.0"
+mongodb_port: 27017
+mongodb_dbpath: "/var/lib/mongodb"
+mongodb_logpath: "/var/log/mongodb/mongod.log"
+
+mongodb_config:
+  storage:
+    dbPath: "/var/lib/mongodb"
+    journal:
+      enabled: true
+  systemLog:
+    destination: file
+    logAppend: true
+    path: "/var/log/mongodb/mongod.log"
+  net:
+    port: 27017
+    bindIp: "0.0.0.0"
+
+mongodb_users:
+  - name: infokes_user
+    password: "{{ vault_mongodb_app_password }}"
+    roles: "readWrite"
+  - name: backup_user
+    password: "{{ vault_mongodb_backup_password }}"
+    roles: "backup"
+
+mongodb_databases:
+  - name: infokes
+
+# Replication Configuration
+mysql_replication:
+  enabled: true
+  role: "primary"
+  server_id: 1
+  binlog_format: "ROW"
+
+postgresql_replication:
+  enabled: true
+  role: "primary"
+  wal_level: "replica"
+  max_wal_senders: 3
+
+mongodb_replication:
+  enabled: true
+  replSetName: "infokesRS"
+  members: 2
+
+# Backup Configuration
+backup_strategy: "full"
+backup_compression: "gzip"
+backup_encryption: true
+backup_encryption_key: "{{ vault_backup_encryption_key }}"
+
+# Security Configuration
+database_firewall_rules:
+  - { rule: allow, src: "10.0.10.0/24", port: "3306", comment: "MySQL from app servers" }
+  - { rule: allow, src: "10.0.10.0/24", port: "5432", comment: "PostgreSQL from app servers" }
+  - { rule: allow, src: "10.0.10.0/24", port: "27017", comment: "MongoDB from app servers" }
+  - { rule: allow, src: "10.0.50.0/24", port: "3306", comment: "MySQL backup" }
+  - { rule: allow, src: "10.0.50.0/24", port: "5432", comment: "PostgreSQL backup" }
+
+# Monitoring Configuration
+database_monitoring:
+  enabled: true
+  metrics_port: 9104
+  query_timeout: 30
+
+# Performance Tuning
+performance_settings:
+  mysql:
+    innodb_buffer_pool_size: "4G"
+    innodb_log_file_size: "512M"
+  postgresql:
+    shared_buffers: "1GB"
+    effective_cache_size: "3GB"
+  mongodb:
+    wiredTiger_cache_size: "2G"
+
+# Maintenance Configuration
+maintenance_window: "02:00-04:00"
+backup_window: "01:00-02:00"
+vacuum_schedule: "0 3 * * *"
+optimize_schedule: "0 4 * * 0"

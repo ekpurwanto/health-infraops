@@ -1,0 +1,91 @@
+# Health-InfraOps SSH Server Configuration
+# Infokes Healthcare System - Secure SSH Access
+
+# Basic Settings
+Port 2222
+Protocol 2
+AddressFamily inet
+ListenAddress 10.0.40.41
+ListenAddress 10.0.10.11
+
+# Security Settings
+PermitRootLogin no
+StrictModes yes
+MaxAuthTries 3
+MaxSessions 10
+ClientAliveInterval 300
+ClientAliveCountMax 2
+LoginGraceTime 60
+
+# Authentication
+PubkeyAuthentication yes
+PasswordAuthentication no
+PermitEmptyPasswords no
+ChallengeResponseAuthentication no
+KerberosAuthentication no
+GSSAPIAuthentication no
+
+# X11 and Forwarding
+X11Forwarding no
+AllowTcpForwarding yes
+PermitTTY yes
+PrintMotd yes
+PrintLastLog yes
+
+# Logging
+SyslogFacility AUTH
+LogLevel VERBOSE
+
+# Access Control
+AllowUsers admin deploy monitor backup
+AllowGroups ssh-users infra-admin
+DenyUsers root bin daemon
+DenyGroups no-ssh
+
+# Match blocks for specific users/groups
+Match User admin
+    AllowTcpForwarding yes
+    PermitTTY yes
+    X11Forwarding no
+
+Match User deploy
+    AllowTcpForwarding no
+    PermitTTY yes
+    ForceCommand /usr/local/bin/deploy-script
+
+Match User monitor
+    AllowTcpForwarding no
+    PermitTTY no
+    ForceCommand /usr/local/bin/monitor-script
+
+Match Group backup
+    AllowTcpForwarding no
+    PermitTTY yes
+    ChrootDirectory /backup
+
+# Chroot settings
+ChrootDirectory /home/%u
+
+# Crypto Settings
+Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr
+MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,umac-128-etm@openssh.com
+KexAlgorithms curve25519-sha256,curve25519-sha256@libssh.org,diffie-hellman-group-exchange-sha256
+HostKeyAlgorithms rsa-sha2-512,rsa-sha2-256,ssh-rsa
+
+# Performance
+UseDNS no
+Compression no
+
+# Banner
+Banner /etc/ssh/banner
+
+# Subsystem
+Subsystem sftp internal-sftp -f AUTHPRIV -l INFO
+
+# Match block for SFTP only users
+Match Group sftp-users
+    ChrootDirectory /home/%u
+    ForceCommand internal-sftp
+    AllowTcpForwarding no
+    PermitTTY no
+    X11Forwarding no

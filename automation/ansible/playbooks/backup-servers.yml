@@ -1,0 +1,235 @@
+---
+# Health-InfraOps Backup Automation
+# Infokes Healthcare System - Data Protection
+
+- name: Configure Backup Infrastructure
+  hosts: backup_servers
+  become: yes
+  vars_files:
+    - "../group_vars/all.yml"
+  
+  tasks:
+    - name: Install backup software
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - rsync
+        - duplicity
+        - borgbackup
+        - rsnapshot
+
+    - name: Create backup directory structure
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: backup
+        group: backup
+        mode: '0755'
+      loop:
+        - "{{ backup_root }}/daily"
+        - "{{ backup_root }}/weekly"
+        - "{{ backup_root }}/monthly"
+        - "{{ backup_root }}/logs"
+
+    - name: Configure NFS exports for backups
+      template:
+        src: exports.j2
+        dest: /etc/exports
+      notify: restart nfs-server
+
+    - name: Setup backup user and permissions
+      user:
+        name: backup
+        shell: /bin/bash
+        home: /home/backup
+        system: yes
+        create_home: yes
+
+    - name: Deploy backup scripts
+      template:
+        src: "{{ item }}.j2"
+        dest: "/usr/local/bin/{{ item }}"
+        mode: '0755'
+      loop:
+        - backup-databases.sh
+        - backup-applications.sh
+        - backup-configurations.sh
+        - verify-backups.sh
+
+    - name: Configure backup schedules
+      cron:
+        name: "Daily database backup"
+        job: "/usr/local/bin/backup-databases.sh daily >> {{ backup_root }}/logs/daily-$(date +%Y%m%d).log 2>&1"
+        minute: "0"
+        hour: "1"
+        user: backup
+
+      cron:
+        name: "Weekly full backup"
+        job: "/usr/local/bin/backup-databases.sh weekly >> {{ backup_root }}/logs/weekly-$(date +%Y%m%d).log 2>&1"
+        minute: "0"
+        hour: "2"
+        weekday: "0"
+        user: backup
+
+      cron:
+        name: "Backup verification"
+        job: "/usr/local/bin/verify-backups.sh >> {{ backup_root }}/logs/verify-$(date +%Y%m%d).log 2>&1"
+        minute: "30"
+        hour: "3"
+        user: backup
+
+  handlers:
+    - name: restart nfs-server
+      systemd:
+        name: nfs-server
+        state: restarted
+
+- name: Database Backups
+  hosts: db_servers
+  become: yes
+  vars_files:
+    - "../group_vars/all.yml"
+    - "../group_vars/db-servers.yml"
+
+  tasks:
+    - name: Create database backup user
+      mysql_user:
+        name: backup_user
+        host: "%"
+        password: "{{ db_backup_password }}"
+        priv: "*.*:SELECT,RELOAD,LOCK TABLES,REPLICATION CLIENT"
+        state: present
+      when: "'mysql_servers' in group_names"
+
+    - name: Setup MySQL backup script
+      template:
+        src: backup-mysql.sh.j2
+        dest: /usr/local/bin/backup-mysql.sh
+        mode: '0755'
+
+    - name: Configure MySQL backup schedule
+      cron:
+        name: "MySQL backup"
+        job: "/usr/local/bin/backup-mysql.sh >> /var/log/mysql-backup.log 2>&1"
+        minute: "0"
+        hour: "0"
+        user: backup
+
+    - name: Setup PostgreSQL backup
+      template:
+        src: backup-postgresql.sh.j2
+        dest: /usr/local/bin/backup-postgresql.sh
+        mode: '0755'
+      when: "'postgres_servers' in group_names"
+
+    - name: Configure PostgreSQL backup schedule
+      cron:
+        name: "PostgreSQL backup"
+        job: "/usr/local/bin/backup-postgresql.sh >> /var/log/postgresql-backup.log 2>&1"
+        minute: "15"
+        hour: "0"
+        user: postgres
+      when: "'postgres_servers' in group_names"
+
+- name: Application Data Backups
+  hosts: app_servers
+  become: yes
+  vars_files:
+    - "../group_vars/all.yml"
+
+  tasks:
+    - name: Backup application code
+      archive:
+        path: "{{ app_install_dir }}"
+        dest: "/tmp/{{ app_name }}-code-{{ ansible_date_time.epoch }}.tar.gz"
+        owner: backup
+        group: backup
+
+    - name: Backup application data
+      archive:
+        path: "{{ app_data_dir }}"
+        dest: "/tmp/{{ app_name }}-data-{{ ansible_date_time.epoch }}.tar.gz"
+        owner: backup
+        group: backup
+
+    - name: Transfer backups to backup server
+      synchronize:
+        src: "/tmp/{{ app_name }}-*.tar.gz"
+        dest: "backup@{{ backup_server }}:{{ backup_root }}/daily/applications/"
+        recursive: yes
+        delete: yes
+      delegate_to: "{{ backup_server }}"
+
+    - name: Cleanup local backup files
+      file:
+        path: "/tmp/{{ app_name }}-*.tar.gz"
+        state: absent
+
+- name: Configuration Backups
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Backup important configurations
+      archive:
+        path: "/etc/{{ item }}"
+        dest: "/tmp/{{ inventory_hostname }}-{{ item }}-{{ ansible_date_time.epoch }}.tar.gz"
+      loop:
+        - nginx
+        - ssh
+        - mysql
+        - postgresql
+        - prometheus
+        - grafana
+      when: item in group_names
+
+    - name: Transfer configuration backups
+      synchronize:
+        src: "/tmp/{{ inventory_hostname }}-*.tar.gz"
+        dest: "backup@{{ backup_server }}:{{ backup_root }}/daily/configurations/"
+        recursive: yes
+        delete: yes
+      delegate_to: "{{ backup_server }}"
+
+    - name: Cleanup local configuration backups
+      file:
+        path: "/tmp/{{ inventory_hostname }}-*.tar.gz"
+        state: absent
+
+- name: Backup Verification and Monitoring
+  hosts: backup_servers
+  become: yes
+
+  tasks:
+    - name: Check backup integrity
+      shell: |
+        find {{ backup_root }}/daily -name "*.tar.gz" -mtime -1 -exec tar -tzf {} \; > /dev/null 2>&1
+        echo $?
+      register: backup_integrity
+      changed_when: false
+
+    - name: Alert on backup failures
+      mail:
+        host: "{{ smtp_host }}"
+        port: "{{ smtp_port }}"
+        subject: "Backup Integrity Check Failed"
+        body: "Backup integrity check failed on {{ inventory_hostname }}. Please investigate."
+        from: "backup@infokes.co.id"
+        to: "{{ backup_notification_emails }}"
+      when: backup_integrity.stdout != "0"
+
+    - name: Generate backup report
+      template:
+        src: backup-report.j2
+        dest: "{{ backup_root }}/logs/backup-report-{{ ansible_date_time.epoch }}.html"
+
+    - name: Send backup summary
+      mail:
+        host: "{{ smtp_host }}"
+        port: "{{ smtp_port }}"
+        subject: "Daily Backup Summary - {{ ansible_date_time.date }}"
+        body: "Backup operations completed. Integrity: {{ 'PASS' if backup_integrity.stdout == '0' else 'FAIL' }}"
+        from: "backup@infokes.co.id"
+        to: "{{ backup_notification_emails }}"

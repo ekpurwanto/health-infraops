@@ -1,0 +1,35 @@
+#cloud-config
+hostname: infokes-node
+manage_etc_hosts: true
+fqdn: infokes-node.local
+
+users:
+  - name: admin
+    ssh-authorized-keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC...
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    groups: sudo
+    shell: /bin/bash
+
+package_update: true
+package_upgrade: true
+
+packages:
+  - curl
+  - wget
+  - vim
+  - htop
+  - net-tools
+  - git
+  - ufw
+
+runcmd:
+  - systemctl enable ssh
+  - systemctl start ssh
+  - ufw allow 22/tcp
+  - ufw allow 80/tcp
+  - ufw allow 443/tcp
+  - ufw --force enable
+  - echo "Cloud-init completed successfully" > /var/log/cloud-init.log
+
+final_message: "Health-InfraOps system ready after $UPTIME seconds"

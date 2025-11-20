@@ -1,0 +1,48 @@
+#!/bin/bash
+# Health-InfraOps Pre-commit Hook
+
+echo "🔍 Running Health-InfraOps pre-commit checks..."
+
+# Check for TODO and FIXME comments
+echo "Checking for TODO/FIXME comments..."
+if git diff --cached --name-only | xargs grep -n "TODO\|FIXME" 2>/dev/null; then
+    echo "⚠️  WARNING: TODO or FIXME comments found"
+    read -p "Continue anyway? (y/N): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        exit 1
+    fi
+fi
+
+# Check shell scripts
+echo "Checking shell scripts..."
+for file in $(git diff --cached --name-only -- "*.sh"); do
+    if [ -f "$file" ]; then
+        echo "Checking $file"
+        shellcheck "$file"
+        if [ $? -ne 0 ]; then
+            echo "❌ ShellCheck failed for $file"
+            exit 1
+        fi
+    fi
+done
+
+# Check YAML files
+echo "Checking YAML files..."
+for file in $(git diff --cached --name-only -- "*.yml" "*.yaml"); do
+    if [ -f "$file" ]; then
+        echo "Checking $file"
+        python3 -c "import yaml; yaml.safe_load(open('$file'))" || exit 1
+    fi
+done
+
+# Check JSON files
+echo "Checking JSON files..."
+for file in $(git diff --cached --name-only -- "*.json"); do
+    if [ -f "$file" ]; then
+        echo "Checking $file"
+        jq . "$file" > /dev/null || exit 1
+    fi
+done
+
+echo "✅ All pre-commit checks passed!"

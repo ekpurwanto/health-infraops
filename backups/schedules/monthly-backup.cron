@@ -1,0 +1,23 @@
+# Health-InfraOps Monthly Backup Schedule
+# Monthly maintenance and long-term backup procedures
+
+# Monthly full backup with extended retention on 1st of month at 12:00 AM
+0 0 1 * * /opt/health-infraops/backups/scripts/full-backup.sh --environment prod --encrypt --verify --upload-cloud --retention 90 >> /var/log/health-infraops/backup-monthly.log 2>&1
+
+# Archive monthly backup to cold storage on 2nd of month at 2:00 AM
+0 2 2 * * /opt/health-infraops/automation/scripts/backup-all.sh --type full --retention 365 --upload-cloud >> /var/log/health-infraops/archive-monthly.log 2>&1
+
+# Comprehensive disaster recovery test on 15th of month at 10:00 PM
+0 22 15 * * /opt/health-infraops/scripts/disaster-recovery.sh validate-dr --environment prod >> /var/log/health-infraops/dr-test-monthly.log 2>&1
+
+# Backup infrastructure audit on 10th of month at 3:00 AM
+0 3 10 * * /opt/health-infraops/backups/scripts/verify-backup.sh --type all --check-integrity --test-restore --html-report >> /var/log/health-infraops/audit-monthly.log 2>&1
+
+# Long-term retention cleanup on 5th of month at 4:00 AM
+0 4 5 * * find /opt/health-infraops/backups/data -name "*.gz" -type f -mtime +365 -delete >> /var/log/health-infraops/cleanup-monthly.log 2>&1
+
+# Backup policy compliance check on 20th of month at 11:00 PM
+0 23 20 * * /opt/health-infraops/backups/scripts/verify-backup.sh --type all --quick --html-report --email-report >> /var/log/health-infraops/compliance-monthly.log 2>&1
+
+# Cloud backup synchronization check on 25th of month at 1:00 AM
+0 1 25 * * aws s3 sync /opt/health-infraops/backups/data/ s3://health-infraops-backups/ --delete >> /var/log/health-infraops/cloud-sync.log 2>&1

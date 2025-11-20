@@ -1,0 +1,29 @@
+# Health-InfraOps Development Inventory
+# Infokes Healthcare System - Development Environment
+
+[all:vars]
+ansible_user=admin
+ansible_ssh_private_key_file=~/.ssh/health-infraops-admin.key
+ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+ansible_python_interpreter=/usr/bin/python3
+
+# Development Servers (all-in-one)
+[dev_servers]
+dev-01.infokes.co.id ansible_host=10.0.70.10
+
+[dev_servers:vars]
+ansible_ssh_port=2222
+service_type=all_in_one
+app_environment=development
+
+# Development Groups
+[development:children]
+dev_servers
+
+# Variables for development
+[development:vars]
+environment=development
+domain=dev.infokes.co.id
+ssl_enabled=false
+backup_enabled=false
+monitoring_enabled=false

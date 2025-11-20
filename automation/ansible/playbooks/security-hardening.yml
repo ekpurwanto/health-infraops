@@ -1,0 +1,332 @@
+---
+# Health-InfraOps Security Hardening
+# Infokes Healthcare System - Security Automation
+
+- name: Base System Hardening
+  hosts: all
+  become: yes
+  vars_files:
+    - "../group_vars/all.yml"
+
+  tasks:
+    - name: Update package cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Upgrade system packages
+      apt:
+        upgrade: dist
+        autoremove: yes
+        autoclean: yes
+
+    - name: Install security packages
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - fail2ban
+        - ufw
+        - auditd
+        - lynis
+        - rkhunter
+        - chkrootkit
+
+    - name: Remove unnecessary packages
+      apt:
+        name: "{{ item }}"
+        state: absent
+        purge: yes
+      loop:
+        - telnetd
+        - rsh-server
+        - ypserv
+        - talkd
+
+- name: SSH Hardening
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Deploy secure SSH configuration
+      template:
+        src: sshd_config.j2
+        dest: /etc/ssh/sshd_config
+        owner: root
+        group: root
+        mode: '0600'
+      notify: restart ssh
+
+    - name: Configure SSH banner
+      template:
+        src: ssh-banner.j2
+        dest: /etc/ssh/banner
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Setup SSH key authentication only
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PasswordAuthentication'
+        line: 'PasswordAuthentication no'
+      notify: restart ssh
+
+    - name: Disable root SSH login
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PermitRootLogin'
+        line: 'PermitRootLogin no'
+      notify: restart ssh
+
+    - name: Configure SSH service port
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?Port'
+        line: 'Port 2222'
+      notify: restart ssh
+
+  handlers:
+    - name: restart ssh
+      systemd:
+        name: ssh
+        state: restarted
+
+- name: Firewall Configuration
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Reset UFW to defaults
+      ufw:
+        state: reset
+
+    - name: Configure UFW defaults
+      ufw:
+        direction: "{{ item.direction }}"
+        policy: "{{ item.policy }}"
+      loop:
+        - { direction: incoming, policy: deny }
+        - { direction: outgoing, policy: allow }
+        - { direction: routed, policy: deny }
+
+    - name: Allow SSH on custom port
+      ufw:
+        rule: allow
+        port: "2222"
+        proto: tcp
+
+    - name: Enable UFW
+      ufw:
+        state: enabled
+
+    - name: Configure VLAN-specific rules
+      ufw:
+        rule: "{{ item.rule }}"
+        src: "{{ item.src }}"
+        port: "{{ item.port }}"
+        proto: tcp
+      loop: "{{ vlan_firewall_rules }}"
+
+- name: System Service Hardening
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Disable unnecessary services
+      systemd:
+        name: "{{ item }}"
+        state: stopped
+        enabled: no
+      loop:
+        - avahi-daemon
+        - cups
+        - rpcbind
+        - nfs-server
+
+    - name: Configure service timeouts
+      sysctl:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        state: present
+        reload: yes
+      loop:
+        - { name: net.ipv4.tcp_fin_timeout, value: '30' }
+        - { name: net.ipv4.tcp_keepalive_time, value: '300' }
+        - { name: net.ipv4.tcp_syncookies, value: '1' }
+
+- name: File System Security
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Set secure file permissions
+      file:
+        path: "{{ item.path }}"
+        owner: "{{ item.owner | default('root') }}"
+        group: "{{ item.group | default('root') }}"
+        mode: "{{ item.mode }}"
+      loop:
+        - { path: /etc/passwd, mode: '0644' }
+        - { path: /etc/shadow, mode: '0640' }
+        - { path: /etc/group, mode: '0644' }
+        - { path: /etc/gshadow, mode: '0640' }
+
+    - name: Configure /tmp security
+      mount:
+        path: /tmp
+        src: tmpfs
+        fstype: tmpfs
+        opts: defaults,nosuid,nodev,noexec
+        state: mounted
+
+    - name: Secure shared memory
+      mount:
+        path: /dev/shm
+        src: tmpfs
+        fstype: tmpfs
+        opts: defaults,nosuid,nodev,noexec
+        state: present
+
+- name: Audit and Logging Configuration
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Deploy audit rules
+      template:
+        src: audit.rules.j2
+        dest: /etc/audit/rules.d/health-infraops.rules
+      notify: restart auditd
+
+    - name: Configure auditd
+      template:
+        src: auditd.conf.j2
+        dest: /etc/audit/auditd.conf
+      notify: restart auditd
+
+    - name: Setup log rotation
+      template:
+        src: logrotate.j2
+        dest: /etc/logrotate.d/health-infraops
+
+  handlers:
+    - name: restart auditd
+      systemd:
+        name: auditd
+        state: restarted
+
+- name: Application-Specific Hardening
+  hosts: web_servers
+  become: yes
+
+  tasks:
+    - name: Harden Nginx configuration
+      template:
+        src: nginx-security.conf.j2
+        dest: /etc/nginx/conf.d/security.conf
+      notify: reload nginx
+
+    - name: Configure application security headers
+      lineinfile:
+        path: "{{ app_install_dir }}/app.js"
+        insertafter: 'app.use(express.json())'
+        line: 'app.use(helmet())'
+      notify: restart application
+
+    - name: Setup application rate limiting
+      template:
+        src: rate-limit.js.j2
+        dest: "{{ app_install_dir }}/middleware/rate-limit.js"
+      notify: restart application
+
+- name: Database Security Hardening
+  hosts: db_servers
+  become: yes
+
+  tasks:
+    - name: Harden MySQL configuration
+      template:
+        src: mysql-security.cnf.j2
+        dest: /etc/mysql/conf.d/security.cnf
+      notify: restart mysql
+
+    - name: Secure MySQL installation
+      mysql_secure_installation:
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+      when: "'mysql_servers' in group_names"
+
+    - name: Harden PostgreSQL configuration
+      template:
+        src: pg_hba.conf.j2
+        dest: /etc/postgresql/*/main/pg_hba.conf
+      notify: restart postgresql
+      when: "'postgres_servers' in group_names"
+
+  handlers:
+    - name: restart mysql
+      systemd:
+        name: mysql
+        state: restarted
+
+    - name: restart postgresql
+      systemd:
+        name: postgresql
+        state: restarted
+
+- name: Security Scanning and Monitoring
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Run Lynis security audit
+      command: lynis audit system --quick
+      register: lynis_scan
+      changed_when: false
+
+    - name: Record security scan results
+      copy:
+        content: "{{ lynis_scan.stdout }}"
+        dest: "/var/log/lynis-scan-{{ ansible_date_time.epoch }}.log"
+
+    - name: Configure fail2ban for services
+      template:
+        src: fail2ban-jail.local.j2
+        dest: /etc/fail2ban/jail.local
+      notify: restart fail2ban
+
+  handlers:
+    - name: restart fail2ban
+      systemd:
+        name: fail2ban
+        state: restarted
+
+- name: Compliance and Reporting
+  hosts: localhost
+  connection: local
+
+  tasks:
+    - name: Generate security hardening report
+      template:
+        src: security-report.j2
+        dest: "/tmp/health-infraops-security-report-{{ ansible_date_time.epoch }}.html"
+
+    - name: Send security report
+      mail:
+        host: "{{ smtp_host }}"
+        port: "{{ smtp_port }}"
+        subject: "Health-InfraOps Security Hardening Complete"
+        body: |
+          Security hardening has been completed across all servers.
+          
+          Summary:
+          - SSH: Hardened with key-only authentication
+          - Firewall: UFW configured with VLAN-specific rules
+          - Services: Unnecessary services disabled
+          - File Systems: Secure permissions applied
+          - Applications: Security headers and rate limiting configured
+          
+          Detailed report attached.
+        from: "security@infokes.co.id"
+        to: "{{ security_notification_emails }}"

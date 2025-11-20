@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Health-InfraOps Firewalld Zone Configuration -->
+<zone target="DROP">
+  <short>Health-InfraOps</short>
+  <description>Health Infrastructure Operations Zone - Infokes Healthcare System</description>
+  
+  <!-- Service definitions -->
+  <service name="ssh"/>
+  <service name="http"/>
+  <service name="https"/>
+  <service name="dhcpv6-client"/>
+  
+  <!-- Port definitions -->
+  <port protocol="tcp" port="3000"/>
+  <port protocol="tcp" port="8000"/>
+  <port protocol="tcp" port="9090"/>
+  <port protocol="tcp" port="3000"/>
+  <port protocol="tcp" port="9100"/>
+  <port protocol="tcp" port="10050"/>
+  <port protocol="tcp" port="10051"/>
+  <port protocol="tcp" port="3306"/>
+  <port protocol="tcp" port="5432"/>
+  <port protocol="tcp" port="27017"/>
+  <port protocol="tcp" port="873"/>
+  <port protocol="tcp" port="2049"/>
+  
+  <!-- Source-based rules for VLAN networks -->
+  <source address="10.0.10.0/24"/>
+  <source address="10.0.20.0/24"/>
+  <source address="10.0.30.0/24"/>
+  <source address="10.0.40.0/24"/>
+  <source address="10.0.50.0/24"/>
+  
+  <!-- Rich rules for specific access control -->
+  
+  <!-- SSH only from Management network -->
+  <rule family="ipv4">
+    <source address="10.0.40.0/24"/>
+    <service name="ssh"/>
+    <accept/>
+  </rule>
+  
+  <!-- Database access from App to DB servers -->
+  <rule family="ipv4">
+    <source address="10.0.10.0/24"/>
+    <destination address="10.0.20.0/24"/>
+    <port protocol="tcp" port="3306"/>
+    <accept/>
+  </rule>
+  
+  <rule family="ipv4">
+    <source address="10.0.10.0/24"/>
+    <destination address="10.0.20.0/24"/>
+    <port protocol="tcp" port="5432"/>
+    <accept/>
+  </rule>
+  
+  <rule family="ipv4">
+    <source address="10.0.10.0/24"/>
+    <destination address="10.0.20.0/24"/>
+    <port protocol="tcp" port="27017"/>
+    <accept/>
+  </rule>
+  
+  <!-- Monitoring access from Management network -->
+  <rule family="ipv4">
+    <source address="10.0.40.0/24"/>
+    <port protocol="tcp" port="9090"/>
+    <accept/>
+  </rule>
+  
+  <rule family="ipv4">
+    <source address="10.0.40.0/24"/>
+    <port protocol="tcp" port="3000"/>
+    <accept/>
+  </rule>
+  
+  <!-- Load Balancer to App servers -->
+  <rule family="ipv4">
+    <source address="10.0.30.0/24"/>
+    <destination address="10.0.10.0/24"/>
+    <port protocol="tcp" port="3000"/>
+    <accept/>
+  </rule>
+  
+  <rule family="ipv4">
+    <source address="10.0.30.0/24"/>
+    <destination address="10.0.10.0/24"/>
+    <port protocol="tcp" port="8000"/>
+    <accept/>
+  </rule>
+  
+  <!-- ICMP for internal networks -->
+  <rule family="ipv4">
+    <source address="10.0.0.0/16"/>
+    <protocol value="icmp"/>
+    <accept/>
+  </rule>
+  
+  <!-- Rate limiting for SSH -->
+  <rule family="ipv4">
+    <service name="ssh"/>
+    <limit value="5/m"/>
+    <accept/>
+  </rule>
+</zone>

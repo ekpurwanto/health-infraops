@@ -1,0 +1,81 @@
+# Health-InfraOps Vagrant Configuration
+
+Vagrant.configure("2") do |config|
+  # Global configuration
+  config.vm.box = "ubuntu/jammy64"
+  config.vm.box_version = "20231020.0.0"
+  
+  # Plugin requirements
+  config.vagrant.plugins = ["vagrant-vbguest", "vagrant-hostmanager"]
+  
+  # Load Balancer VM
+  config.vm.define "vm-lb-01" do |lb|
+    lb.vm.hostname = "vm-lb-01"
+    lb.vm.network "private_network", ip: "10.0.30.10", virtualbox__intnet: "health-infraops-dmz"
+    
+    lb.vm.provider "virtualbox" do |vb|
+      vb.name = "health-infraops-lb-01"
+      vb.memory = 2048
+      vb.cpus = 2
+      vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
+    end
+    
+    lb.vm.provision "shell", path: "provision/bootstrap.sh"
+    lb.vm.provision "shell", path: "provision/haproxy.sh"
+  end
+  
+  # Application Server VM
+  config.vm.define "vm-app-01" do |app|
+    app.vm.hostname = "vm-app-01"
+    app.vm.network "private_network", ip: "10.0.10.11", virtualbox__intnet: "health-infraops-prod"
+    
+    app.vm.provider "virtualbox" do |vb|
+      vb.name = "health-infraops-app-01"
+      vb.memory = 4096
+      vb.cpus = 4
+    end
+    
+    app.vm.provision "shell", path: "provision/bootstrap.sh"
+    app.vm.provision "shell", path: "provision/nodejs.sh"
+    app.vm.provision "shell", path: "provision/docker.sh"
+  end
+  
+  # Database Server VM
+  config.vm.define "vm-db-01" do |db|
+    db.vm.hostname = "vm-db-01"
+    db.vm.network "private_network", ip: "10.0.20.21", virtualbox__intnet: "health-infraops-db"
+    
+    db.vm.provider "virtualbox" do |vb|
+      vb.name = "health-infraops-db-01"
+      vb.memory = 8192
+      vb.cpus = 4
+    end
+    
+    db.vm.provision "shell", path: "provision/bootstrap.sh"
+    db.vm.provision "shell", path: "provision/postgresql.sh"
+  end
+  
+  # Monitoring Server VM
+  config.vm.define "vm-mon-01" do |mon|
+    mon.vm.hostname = "vm-mon-01"
+    mon.vm.network "private_network", ip: "10.0.40.41", virtualbox__intnet: "health-infraops-mgmt"
+    
+    mon.vm.provider "virtualbox" do |vb|
+      vb.name = "health-infraops-mon-01"
+      vb.memory = 4096
+      vb.cpus = 2
+    end
+    
+    mon.vm.provision "shell", path: "provision/bootstrap.sh"
+    mon.vm.provision "shell", path: "provision/monitoring.sh"
+  end
+  
+  # Hostmanager plugin configuration
+  config.hostmanager.enabled = true
+  config.hostmanager.manage_host = true
+  config.hostmanager.ignore_private_ip = false
+  config.hostmanager.include_offline = true
+  
+  # Global provisioning
+  config.vm.provision "hostmanager"
+end

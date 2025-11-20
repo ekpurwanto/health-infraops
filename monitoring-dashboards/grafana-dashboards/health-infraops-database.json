@@ -1,0 +1,387 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Health InfraOps - Database Monitoring",
+    "tags": ["health-infraops", "database", "mysql", "mongodb"],
+    "style": "dark",
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Database Status",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "mysql_up",
+            "legendFormat": "MySQL - {{instance}}",
+            "refId": "A"
+          },
+          {
+            "expr": "mongodb_up",
+            "legendFormat": "MongoDB - {{instance}}",
+            "refId": "B"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "mappings": [],
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "red",
+                  "value": null
+                },
+                {
+                  "color": "green",
+                  "value": 1
+                }
+              ]
+            },
+            "unit": "bool"
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "MySQL Query Performance",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate(mysql_global_status_questions[5m])",
+            "legendFormat": "Questions - {{instance}}",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(mysql_global_status_slow_queries[5m])",
+            "legendFormat": "Slow Queries - {{instance}}",
+            "refId": "B"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ops",
+            "min": 0
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Database Connections",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "mysql_global_status_threads_connected",
+            "legendFormat": "MySQL Connected - {{instance}}",
+            "refId": "A"
+          },
+          {
+            "expr": "mysql_global_variables_max_connections",
+            "legendFormat": "MySQL Max - {{instance}}",
+            "refId": "B"
+          },
+          {
+            "expr": "mongodb_connections_current",
+            "legendFormat": "MongoDB Current - {{instance}}",
+            "refId": "C"
+          },
+          {
+            "expr": "mongodb_connections_available",
+            "legendFormat": "MongoDB Available - {{instance}}",
+            "refId": "D"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 8
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "min": 0
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "MySQL Replication Lag",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "mysql_slave_status_seconds_behind_master",
+            "legendFormat": "{{instance}}",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 8
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "min": 0,
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 30
+                },
+                {
+                  "color": "red",
+                  "value": 60
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Database Operations",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate(mysql_global_status_Com_select[5m])",
+            "legendFormat": "SELECT - {{instance}}",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(mysql_global_status_Com_insert[5m])",
+            "legendFormat": "INSERT - {{instance}}",
+            "refId": "B"
+          },
+          {
+            "expr": "rate(mysql_global_status_Com_update[5m])",
+            "legendFormat": "UPDATE - {{instance}}",
+            "refId": "C"
+          },
+          {
+            "expr": "rate(mysql_global_status_Com_delete[5m])",
+            "legendFormat": "DELETE - {{instance}}",
+            "refId": "D"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 16
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ops",
+            "min": 0
+          }
+        }
+      },
+      {
+        "id": 6,
+        "title": "MongoDB Operations",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate(mongodb_opcounters_command_total[5m])",
+            "legendFormat": "Commands - {{instance}}",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(mongodb_opcounters_query_total[5m])",
+            "legendFormat": "Queries - {{instance}}",
+            "refId": "B"
+          },
+          {
+            "expr": "rate(mongodb_opcounters_insert_total[5m])",
+            "legendFormat": "Inserts - {{instance}}",
+            "refId": "C"
+          },
+          {
+            "expr": "rate(mongodb_opcounters_update_total[5m])",
+            "legendFormat": "Updates - {{instance}}",
+            "refId": "D"
+          },
+          {
+            "expr": "rate(mongodb_opcounters_delete_total[5m])",
+            "legendFormat": "Deletes - {{instance}}",
+            "refId": "E"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 16
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ops",
+            "min": 0
+          }
+        }
+      },
+      {
+        "id": 7,
+        "title": "InnoDB Buffer Pool",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "mysql_global_status_innodb_buffer_pool_pages_data * mysql_global_variables_innodb_page_size",
+            "legendFormat": "Data - {{instance}}",
+            "refId": "A"
+          },
+          {
+            "expr": "mysql_global_status_innodb_buffer_pool_pages_free * mysql_global_variables_innodb_page_size",
+            "legendFormat": "Free - {{instance}}",
+            "refId": "B"
+          },
+          {
+            "expr": "mysql_global_variables_innodb_buffer_pool_size",
+            "legendFormat": "Total - {{instance}}",
+            "refId": "C"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 24
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "bytes",
+            "min": 0
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Database Locks",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "mysql_global_status_innodb_row_lock_current_waits",
+            "legendFormat": "Row Lock Waits - {{instance}}",
+            "refId": "A"
+          },
+          {
+            "expr": "mysql_global_status_table_locks_waited",
+            "legendFormat": "Table Lock Waits - {{instance}}",
+            "refId": "B"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 24
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "min": 0
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "MongoDB Memory Usage",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "mongodb_memory_resident",
+            "legendFormat": "Resident - {{instance}}",
+            "refId": "A"
+          },
+          {
+            "expr": "mongodb_memory_virtual",
+            "legendFormat": "Virtual - {{instance}}",
+            "refId": "B"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 32
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "bytes",
+            "min": 0
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "Database Network Traffic",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate(mysql_global_status_bytes_received[5m])",
+            "legendFormat": "MySQL Received - {{instance}}",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(mysql_global_status_bytes_sent[5m])",
+            "legendFormat": "MySQL Sent - {{instance}}",
+            "refId": "B"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 32
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "Bps",
+            "min": 0
+          }
+        }
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "templating": {
+      "list": [
+        {
+          "name": "instance",
+          "type": "query",
+          "query": "label_values(mysql_up, instance)",
+          "refresh": 1,
+          "includeAll": true,
+          "multi": true
+        }
+      ]
+    },
+    "refresh": "30s",
+    "schemaVersion": 35,
+    "version": 1,
+    "description": "Health InfraOps Database Monitoring - Comprehensive monitoring of MySQL and MongoDB databases"
+  }
+}

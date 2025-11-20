@@ -1,0 +1,133 @@
+#!/bin/bash
+# Health-InfraOps iptables Firewall Rules
+
+# =============================================
+# Health Infrastructure Operations Firewall
+# Infokes.co.id - Healthcare System
+# =============================================
+
+# Clear all existing rules
+iptables -F
+iptables -X
+iptables -t nat -F
+iptables -t nat -X
+iptables -t mangle -F
+iptables -t mangle -X
+
+# Default policies
+iptables -P INPUT DROP
+iptables -P FORWARD DROP
+iptables -P OUTPUT ACCEPT
+
+# Allow loopback interface
+iptables -A INPUT -i lo -j ACCEPT
+iptables -A OUTPUT -o lo -j ACCEPT
+
+# Allow established and related connections
+iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# ============ VLAN-BASED RULES ============
+
+# VLAN 10 - PRODUCTION (Web/App Servers)
+iptables -A INPUT -s 10.0.10.0/24 -j ACCEPT
+iptables -A OUTPUT -d 10.0.10.0/24 -j ACCEPT
+
+# VLAN 20 - DATABASE (Database Servers)
+iptables -A INPUT -s 10.0.20.0/24 -j ACCEPT
+iptables -A OUTPUT -d 10.0.20.0/24 -j ACCEPT
+
+# VLAN 30 - DMZ (Load Balancers)
+iptables -A INPUT -s 10.0.30.0/24 -j ACCEPT
+iptables -A OUTPUT -d 10.0.30.0/24 -j ACCEPT
+
+# VLAN 40 - MANAGEMENT (Monitoring/Admin)
+iptables -A INPUT -s 10.0.40.0/24 -j ACCEPT
+iptables -A OUTPUT -d 10.0.40.0/24 -j ACCEPT
+
+# VLAN 50 - BACKUP (Backup Network)
+iptables -A INPUT -s 10.0.50.0/24 -j ACCEPT
+iptables -A OUTPUT -d 10.0.50.0/24 -j ACCEPT
+
+# ============ SERVICE-SPECIFIC RULES ============
+
+# SSH - Only from Management network
+iptables -A INPUT -s 10.0.40.0/24 -p tcp --dport 22 -j ACCEPT
+iptables -A INPUT -s 10.0.10.0/24 -p tcp --dport 22 -j ACCEPT
+
+# HTTP/HTTPS - From anywhere (public facing)
+iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+
+# Database Access
+# MySQL - Only from App servers to DB servers
+iptables -A INPUT -s 10.0.10.0/24 -d 10.0.20.0/24 -p tcp --dport 3306 -j ACCEPT
+# PostgreSQL - Only from App servers to DB servers  
+iptables -A INPUT -s 10.0.10.0/24 -d 10.0.20.0/24 -p tcp --dport 5432 -j ACCEPT
+# MongoDB - Only from App servers to DB servers
+iptables -A INPUT -s 10.0.10.0/24 -d 10.0.20.0/24 -p tcp --dport 27017 -j ACCEPT
+
+# Monitoring Services
+# Prometheus - From Monitoring to all servers
+iptables -A INPUT -s 10.0.40.0/24 -p tcp --dport 9090 -j ACCEPT
+# Node Exporter - From Monitoring to all servers
+iptables -A INPUT -s 10.0.40.0/24 -p tcp --dport 9100 -j ACCEPT
+# Grafana - From Management network
+iptables -A INPUT -s 10.0.40.0/24 -p tcp --dport 3000 -j ACCEPT
+# Zabbix - From Monitoring to all servers
+iptables -A INPUT -s 10.0.40.0/24 -p tcp --dport 10050 -j ACCEPT
+iptables -A INPUT -s 10.0.40.0/24 -p tcp --dport 10051 -j ACCEPT
+
+# Load Balancer Health Checks
+iptables -A INPUT -s 10.0.30.0/24 -p tcp -m multiport --dports 3000,8000 -j ACCEPT
+
+# Application Ports
+# Node.js App - From LB to App servers
+iptables -A INPUT -s 10.0.30.0/24 -d 10.0.10.0/24 -p tcp --dport 3000 -j ACCEPT
+# Python App - From LB to App servers  
+iptables -A INPUT -s 10.0.30.0/24 -d 10.0.10.0/24 -p tcp --dport 8000 -j ACCEPT
+
+# Backup Services
+# Rsync - From Backup servers
+iptables -A INPUT -s 10.0.50.0/24 -p tcp --dport 873 -j ACCEPT
+# NFS - From authorized networks
+iptables -A INPUT -s 10.0.50.0/24 -p tcp --dport 2049 -j ACCEPT
+iptables -A INPUT -s 10.0.40.0/24 -p tcp --dport 2049 -j ACCEPT
+
+# DNS Services
+iptables -A INPUT -p udp --dport 53 -j ACCEPT
+iptables -A INPUT -p tcp --dport 53 -j ACCEPT
+
+# NTP Time Synchronization
+iptables -A INPUT -p udp --dport 123 -j ACCEPT
+
+# ICMP (Ping) - Allow from internal networks
+iptables -A INPUT -s 10.0.0.0/16 -p icmp --icmp-type echo-request -j ACCEPT
+
+# ============ SECURITY HARDENING ============
+
+# Protection against port scanning
+iptables -A INPUT -p tcp --tcp-flags ALL NONE -j DROP
+iptables -A INPUT -p tcp --tcp-flags ALL ALL -j DROP
+
+# SYN Flood Protection
+iptables -A INPUT -p tcp --syn -m limit --limit 1/s --limit-burst 3 -j ACCEPT
+iptables -A INPUT -p tcp --syn -j DROP
+
+# Drop invalid packets
+iptables -A INPUT -m state --state INVALID -j DROP
+
+# SSH brute force protection
+iptables -A INPUT -p tcp --dport 22 -m state --state NEW -m recent --set
+iptables -A INPUT -p tcp --dport 22 -m state --state NEW -m recent --update --seconds 60 --hitcount 4 -j DROP
+
+# ============ LOGGING ============
+
+# Log dropped packets (limit to avoid log flooding)
+iptables -A INPUT -m limit --limit 5/min -j LOG --log-prefix "iptables_INPUT_dropped: " --log-level 4
+iptables -A FORWARD -m limit --limit 5/min -j LOG --log-prefix "iptables_FORWARD_dropped: " --log-level 4
+
+# Save rules
+iptables-save > /etc/iptables/rules.v4
+
+echo "Health-InfraOps iptables rules applied successfully"

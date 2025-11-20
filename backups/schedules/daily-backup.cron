@@ -1,0 +1,25 @@
+# Health-InfraOps Daily Backup Schedule
+# Runs incremental backups daily with verification
+
+# Environment variables
+BACKUP_ENCRYPTION_KEY="your-encryption-key-here"
+AWS_ACCESS_KEY_ID="your-aws-access-key"
+AWS_SECRET_ACCESS_KEY="your-aws-secret-key"
+
+# Daily incremental backup at 2:00 AM
+0 2 * * * /opt/health-infraops/backups/scripts/incremental-backup.sh --environment prod --since-last-full --encrypt --verify >> /var/log/health-infraops/backup-daily.log 2>&1
+
+# Daily backup verification at 3:00 AM  
+0 3 * * * /opt/health-infraops/backups/scripts/verify-backup.sh --type incremental --since $(date -d "1 day ago" +\%Y-\%m-\%d) --html-report >> /var/log/health-infraops/verify-daily.log 2>&1
+
+# Database-only incremental backup at 1:00 AM (for busy databases)
+0 1 * * * /opt/health-infraops/backups/scripts/incremental-backup.sh --environment prod --since-last-full --encrypt >> /var/log/health-infraops/backup-database.log 2>&1
+
+# Log backup at 4:00 AM
+0 4 * * * /opt/health-infraops/backups/scripts/incremental-backup.sh --environment prod --since $(date -d "1 day ago" +\%Y-\%m-\%d) >> /var/log/health-infraops/backup-logs.log 2>&1
+
+# Cleanup temporary files at 5:00 AM
+0 5 * * * find /tmp -name "backup_*" -type f -mtime +1 -delete >> /var/log/health-infraops/cleanup.log 2>&1
+
+# Backup size monitoring at 6:00 AM
+0 6 * * * du -sh /opt/health-infraops/backups/data/ >> /var/log/health-infraops/backup-size.log 2>&1

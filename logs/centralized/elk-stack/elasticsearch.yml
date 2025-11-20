@@ -1,0 +1,100 @@
+# Health-InfraOps Elasticsearch Configuration
+# Production-ready Elasticsearch configuration for healthcare infrastructure
+
+cluster.name: health-infraops-cluster
+node.name: ${HOSTNAME}
+
+# Paths
+path:
+  data: /var/lib/elasticsearch
+  logs: /var/log/elasticsearch
+
+# Network
+network.host: 0.0.0.0
+http.port: 9200
+transport.port: 9300
+
+# Discovery
+discovery.type: single-node
+# For multi-node cluster, use:
+# discovery.seed_hosts: ["es-01.infokes.co.id", "es-02.infokes.co.id", "es-03.infokes.co.id"]
+# cluster.initial_master_nodes: ["es-01.infokes.co.id", "es-02.infokes.co.id", "es-03.infokes.co.id"]
+
+# Memory settings
+bootstrap.memory_lock: true
+ES_JAVA_OPTS: "-Xms4g -Xmx4g"
+
+# Cluster settings
+cluster.routing.allocation.disk.threshold_enabled: true
+cluster.routing.allocation.disk.watermark.low: 85%
+cluster.routing.allocation.disk.watermark.high: 90%
+cluster.routing.allocation.disk.watermark.flood_stage: 95%
+
+# Index management
+action.auto_create_index: false
+index.number_of_shards: 3
+index.number_of_replicas: 1
+
+# Security (Basic)
+xpack.security.enabled: true
+xpack.security.transport.ssl.enabled: true
+xpack.security.transport.ssl.verification_mode: certificate
+xpack.security.transport.ssl.keystore.path: elastic-certificates.p12
+xpack.security.transport.ssl.truststore.path: elastic-certificates.p12
+
+# Monitoring
+xpack.monitoring.collection.enabled: true
+
+# Health InfraOps specific indices
+index:
+  codec: best_compression
+  max_result_window: 100000
+  max_inner_result_window: 10000
+  max_docvalue_fields_search: 200
+  max_script_fields: 32
+  max_ngram_diff: 1
+  max_shingle_diff: 3
+
+# Health monitoring
+cluster.persistent_tasks.allocation.enable: all
+
+# Slow log thresholds
+index.search.slowlog.threshold.query.warn: 10s
+index.search.slowlog.threshold.query.info: 5s
+index.search.slowlog.threshold.query.debug: 2s
+index.search.slowlog.threshold.query.trace: 500ms
+index.search.slowlog.threshold.fetch.warn: 1s
+index.search.slowlog.threshold.fetch.info: 800ms
+index.search.slowlog.threshold.fetch.debug: 500ms
+index.search.slowlog.threshold.fetch.trace: 200ms
+
+# Field data cache
+indices.fielddata.cache.size: 20%
+
+# Request cache
+indices.requests.cache.size: 2%
+
+# Query cache
+indices.queries.cache.size: 5%
+
+# Circuit breakers
+indices.breaker.total.limit: 70%
+indices.breaker.fielddata.limit: 40%
+indices.breaker.request.limit: 60%
+
+# Health InfraOps custom settings for healthcare data
+script.max_compilations_rate: 100/10m
+search.max_buckets: 65536
+
+# TLS/SSL Configuration (if using HTTPS)
+# xpack.security.http.ssl.enabled: true
+# xpack.security.http.ssl.keystore.path: http.p12
+
+# Audit logging for compliance
+xpack.security.audit.enabled: true
+xpack.security.audit.logfile.events.include: authentication_failed,access_denied
+xpack.security.audit.logfile.events.exclude: _all
+
+# Health InfraOps retention policy
+cluster.max_shards_per_node: 1000
+cluster.max_retries_per_minute: 10

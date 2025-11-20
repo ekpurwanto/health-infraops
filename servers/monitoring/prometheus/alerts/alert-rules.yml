@@ -1,0 +1,188 @@
+# Health-InfraOps Prometheus Alert Rules
+
+groups:
+  - name: infrastructure
+    rules:
+      # Node/Instance down
+      - alert: InstanceDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: infraops
+        annotations:
+          summary: "Instance {{ $labels.instance }} is down"
+          description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 2 minutes."
+
+      # High CPU usage
+      - alert: HighCpuUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          team: infraops
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is above 80% for more than 5 minutes on {{ $labels.instance }}"
+
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          team: infraops
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is above 90% for more than 5 minutes on {{ $labels.instance }}"
+
+      # Disk space running low
+      - alert: DiskSpaceLow
+        expr: (1 - (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          team: infraops
+        annotations:
+          summary: "Disk space is low on {{ $labels.instance }}"
+          description: "Disk usage on {{ $labels.mountpoint }} is above 85% for more than 5 minutes"
+
+      # High disk I/O
+      - alert: HighDiskIO
+        expr: rate(node_disk_read_time_seconds_total[1m]) + rate(node_disk_write_time_seconds_total[1m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          team: infraops
+        annotations:
+          summary: "High disk I/O on {{ $labels.instance }}"
+          description: "Disk I/O is high on {{ $labels.device }} for more than 5 minutes"
+
+  - name: database
+    rules:
+      # MySQL down
+      - alert: MySQLDown
+        expr: mysql_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: database
+        annotations:
+          summary: "MySQL is down on {{ $labels.instance }}"
+          description: "MySQL exporter cannot scrape metrics from {{ $labels.instance }}"
+
+      # High MySQL connections
+      - alert: HighMySQLConnections
+        expr: mysql_global_status_threads_connected / mysql_global_variables_max_connections * 100 > 80
+        for: 3m
+        labels:
+          severity: warning
+          team: database
+        annotations:
+          summary: "High MySQL connections on {{ $labels.instance }}"
+          description: "MySQL connections are above 80% of max_connections for more than 3 minutes"
+
+      # Slow MySQL queries
+      - alert: SlowMySQLQueries
+        expr: rate(mysql_global_status_slow_queries[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          team: database
+        annotations:
+          summary: "High number of slow queries on {{ $labels.instance }}"
+          description: "More than 10 slow queries per minute for more than 5 minutes"
+
+      # MongoDB down
+      - alert: MongoDBDown
+        expr: mongodb_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: database
+        annotations:
+          summary: "MongoDB is down on {{ $labels.instance }}"
+          description: "MongoDB exporter cannot scrape metrics from {{ $labels.instance }}"
+
+  - name: application
+    rules:
+      # Application down
+      - alert: ApplicationDown
+        expr: up{job="infokes-app"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: application
+        annotations:
+          summary: "Infokes application is down on {{ $labels.instance }}"
+          description: "Application instance {{ $labels.instance }} has been down for more than 1 minute"
+
+      # High application error rate
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) * 100 > 5
+        for: 5m
+        labels:
+          severity: warning
+          team: application
+        annotations:
+          summary: "High error rate on {{ $labels.instance }}"
+          description: "HTTP 5xx error rate is above 5% for more than 5 minutes"
+
+      # High response latency
+      - alert: HighResponseLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          team: application
+        annotations:
+          summary: "High response latency on {{ $labels.instance }}"
+          description: "95th percentile response latency is above 2 seconds for more than 5 minutes"
+
+  - name: network
+    rules:
+      # High network traffic
+      - alert: HighNetworkTraffic
+        expr: rate(node_network_receive_bytes_total[5m]) > 100000000
+        for: 5m
+        labels:
+          severity: warning
+          team: network
+        annotations:
+          summary: "High network traffic on {{ $labels.instance }}"
+          description: "Network receive traffic is above 100MB/s for more than 5 minutes"
+
+      # Website down
+      - alert: WebsiteDown
+        expr: probe_success{job="blackbox-http"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: application
+        annotations:
+          summary: "Website {{ $labels.instance }} is down"
+          description: "Website {{ $labels.instance }} has been down for more than 2 minutes"
+
+  - name: business
+    rules:
+      # No new patients
+      - alert: NoNewPatients
+        expr: increase(patients_registered_total[1h]) == 0
+        for: 1h
+        labels:
+          severity: warning
+          team: business
+        annotations:
+          summary: "No new patient registrations in the last hour"
+          description: "No new patients have been registered in the last hour"
+
+      # High appointment cancellation rate
+      - alert: HighCancellationRate
+        expr: rate(appointments_cancelled_total[1h]) / rate(appointments_created_total[1h]) * 100 > 20
+        for: 1h
+        labels:
+          severity: warning
+          team: business
+        annotations:
+          summary: "High appointment cancellation rate"
+          description: "Appointment cancellation rate is above 20% for the last hour"

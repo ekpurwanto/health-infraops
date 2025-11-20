@@ -1,0 +1,55 @@
+{
+  "apps": [
+    {
+      "name": "infokes-api-primary",
+      "script": "./server.js",
+      "instances": 2,
+      "exec_mode": "cluster",
+      "env": {
+        "NODE_ENV": "production",
+        "PORT": 3000,
+        "INSTANCE_ROLE": "primary"
+      },
+      "error_file": "/var/log/pm2/infokes-api-error.log",
+      "out_file": "/var/log/pm2/infokes-api-out.log",
+      "pid_file": "/var/run/pm2/infokes-api.pid",
+      "merge_logs": true,
+      "log_date_format": "YYYY-MM-DD HH:mm Z"
+    },
+    {
+      "name": "infokes-api-secondary",
+      "script": "./server.js",
+      "instances": 2,
+      "exec_mode": "cluster",
+      "env": {
+        "NODE_ENV": "production",
+        "PORT": 3001,
+        "INSTANCE_ROLE": "secondary"
+      },
+      "error_file": "/var/log/pm2/infokes-api-error.log",
+      "out_file": "/var/log/pm2/infokes-api-out.log"
+    },
+    {
+      "name": "infokes-worker-email",
+      "script": "./workers/emailWorker.js",
+      "instances": 1,
+      "exec_mode": "fork",
+      "env": {
+        "NODE_ENV": "production",
+        "WORKER_TYPE": "email"
+      },
+      "max_memory_restart": "256M"
+    },
+    {
+      "name": "infokes-worker-notification",
+      "script": "./workers/notificationWorker.js",
+      "instances": 1,
+      "exec_mode": "fork",
+      "env": {
+        "NODE_ENV": "production",
+        "WORKER_TYPE": "notification"
+      },
+      "max_memory_restart": "256M"
+    }
+  ]
+}

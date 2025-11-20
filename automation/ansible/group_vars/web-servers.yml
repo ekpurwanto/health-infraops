@@ -1,0 +1,101 @@
+---
+# Health-InfraOps Web Servers Configuration
+# Application and API server specific variables
+
+# Nginx Configuration
+nginx_user: www-data
+nginx_worker_processes: auto
+nginx_worker_connections: 1024
+nginx_keepalive_timeout: 65
+nginx_client_max_body_size: 100m
+
+nginx_upstream_servers:
+  app:
+    - "10.0.10.11:3000"
+    - "10.0.10.12:3000"
+    - "10.0.10.13:3000"
+  api:
+    - "10.0.10.15:8000"
+    - "10.0.10.16:8000"
+
+nginx_ssl_config:
+  protocol: "TLSv1.2 TLSv1.3"
+  ciphers: "ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512"
+  session_timeout: "10m"
+  session_cache: "shared:SSL:10m"
+
+# Application Configuration
+nodejs_version: "18.x"
+npm_version: "9.x"
+
+app_environment: production
+app_log_level: info
+app_session_secret: "{{ vault_app_session_secret }}"
+app_jwt_secret: "{{ vault_app_jwt_secret }}"
+
+# Database Connection
+database_host: "db-mysql-01.infokes.co.id"
+database_port: 3306
+database_name: infokes
+database_user: infokes_user
+database_password: "{{ vault_database_password }}"
+
+# Redis Configuration
+redis_host: "10.0.10.18"
+redis_port: 6379
+redis_password: "{{ vault_redis_password }}"
+
+# API Configuration
+api_rate_limit: 100
+api_rate_window: 900000  # 15 minutes in milliseconds
+api_cors_origins:
+  - "https://infokes.co.id"
+  - "https://www.infokes.co.id"
+  - "https://app.infokes.co.id"
+
+# Security Headers
+security_headers:
+  X-Frame-Options: "SAMEORIGIN"
+  X-Content-Type-Options: "nosniff"
+  X-XSS-Protection: "1; mode=block"
+  Strict-Transport-Security: "max-age=31536000; includeSubDomains"
+  Content-Security-Policy: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+
+# Monitoring and Logging
+log_retention_days: 30
+log_rotation: daily
+metrics_enabled: true
+health_check_interval: 30
+
+# Load Balancer Health Checks
+health_check_path: "/health"
+health_check_interval: 10s
+health_check_timeout: 5s
+health_check_rise: 2
+health_check_fall: 3
+
+# Backup Configuration for Web Servers
+backup_paths:
+  - "{{ app_install_dir }}/config"
+  - "{{ app_install_dir }}/uploads"
+  - "{{ app_log_dir }}"
+backup_schedule: "0 2 * * *"
+
+# Performance Tuning
+app_worker_processes: 4
+app_max_memory: "512M"
+app_max_requests: 1000
+
+# Environment Specific
+environment_variables:
+  NODE_ENV: "production"
+  PORT: "3000"
+  LOG_LEVEL: "info"
+  DB_HOST: "{{ database_host }}"
+  DB_PORT: "{{ database_port }}"
+  DB_NAME: "{{ database_name }}"
+  DB_USER: "{{ database_user }}"
+  DB_PASS: "{{ database_password }}"
+  REDIS_HOST: "{{ redis_host }}"
+  REDIS_PORT: "{{ redis_port }}"
+  JWT_SECRET: "{{ app_jwt_secret }}"

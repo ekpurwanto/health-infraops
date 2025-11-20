@@ -1,0 +1,150 @@
+# Health-InfraOps Kibana Configuration
+# Secure Kibana configuration for healthcare infrastructure monitoring
+
+# Server settings
+server.name: kibana
+server.host: "0.0.0.0"
+server.port: 5601
+
+# Elasticsearch connection
+elasticsearch.hosts: ["http://elasticsearch:9200"]
+elasticsearch.username: "kibana_system"
+elasticsearch.password: "${KIBANA_ES_PASSWORD}"
+
+# SSL/TLS Configuration (if using HTTPS)
+# elasticsearch.ssl.certificateAuthorities: [ "/etc/kibana/certs/ca.crt" ]
+# elasticsearch.ssl.certificate: "/etc/kibana/certs/kibana.crt"
+# elasticsearch.ssl.key: "/etc/kibana/certs/kibana.key"
+
+# Kibana security
+xpack.security.enabled: true
+xpack.security.encryptionKey: "health-infraops-encryption-key-32-chars-minimum"
+
+# Session settings
+xpack.security.session.idleTimeout: "1h"
+xpack.security.session.lifespan: "30d"
+
+# Login settings
+xpack.security.loginHelp: "Contact Health InfraOps Admin Team for access"
+
+# Monitoring
+xpack.monitoring.collection.enabled: true
+xpack.monitoring.ui.container.elasticsearch.enabled: true
+
+# Reporting
+xpack.reporting.enabled: true
+xpack.reporting.capture.browser.type: "chromium"
+xpack.reporting.kibanaServer.hostname: "kibana.infokes.co.id"
+
+# Canvas
+xpack.canvas.enabled: true
+
+# Graph
+xpack.graph.enabled: true
+
+# ML
+xpack.ml.enabled: true
+
+# APM
+xpack.apm.ui.enabled: true
+
+# Maps
+xpack.maps.enabled: true
+
+# Health InfraOps specific configurations
+kibana.index: ".kibana-health-infraops"
+
+# Default route
+kibana.defaultRoute: "/app/dashboards#/view/health-infraops-overview"
+
+# Telemetry
+telemetry.enabled: false
+telemetry.allowChangingOptInStatus: false
+
+# News feed
+newsfeed.enabled: false
+
+# State settings
+state: storeInSessionStorage
+
+# i18n
+i18n.locale: "en"
+
+# Plugins
+ops.interval: 5000
+
+# Health InfraOps custom branding
+kibana.customBranding:
+  logo: "/usr/share/kibana/config/assets/health-infraops-logo.svg"
+  title: "Health InfraOps Log Analytics"
+
+# Saved objects
+savedObjects.maxImportPayloadBytes: 26214400
+savedObjects.maxImportExportSize: 10000
+
+# Search settings
+search.timeout: 60000
+
+# Visualization settings
+visualization:tileMap:WMSdefaults:
+  enabled: false
+visualization:colorMapping:
+  "0": "#5F9EA0"
+  "1": "#FF7F50"
+  "2": "#6495ED"
+
+# Dashboard settings
+dashboard:enableExternalUrls: true
+
+# Security audit
+xpack.security.audit.enabled: true
+xpack.security.audit.appender:
+  type: rolling-file
+  fileName: /var/log/kibana/audit.log
+  layout:
+    type: json
+  policy:
+    type: time-interval
+    interval: 24h
+    modulate: true
+  strategy:
+    type: numeric
+    max: 7
+
+# Health InfraOps role mappings
+xpack.security.authc.providers:
+  basic.basic1:
+    order: 0
+    description: "Log in with Elasticsearch"
+  saml.saml1:
+    order: 1
+    realm: "saml1"
+    description: "SSO Login"
+
+# Feature controls
+xpack.security.ui.user: false
+xpack.security.ui.role: false
+xpack.security.ui.roleMapping: false
+xpack.security.ui.apiKey: false
+
+# Development settings (disable in production)
+# elasticsearch.ignoreVersionMismatch: false
+# elasticsearch.requestHeadersWhitelist: [ "authorization" ]
+
+# Performance optimizations
+elasticsearch.maxSockets: 200
+elasticsearch.sniffOnStart: false
+elasticsearch.sniffInterval: false
+elasticsearch.requestTimeout: 30000
+elasticsearch.pingTimeout: 30000
+
+# Health InfraOps custom settings
+logging.verbose: true
+logging.dest: /var/log/kibana/kibana.log
+
+# Plugin management
+plugins.initialize: true
+
+# Health InfraOps compliance settings
+xpack.security.showInsecureClusterWarning: false
+xpack.security.secureCookies: true

@@ -31,50 +31,49 @@
 ```mermaid
 flowchart TB
     %% =========== TOP LEVEL ===========
-    A0([HEALTH-INFRAOPS PLATFORM])
+    A0["HEALTH-INFRAOPS PLATFORM"]
 
     %% =========== LAYER 1 ===========
-    subgraph L1[Load Balancer (HAProxy/Nginx)]
-        A1[SSL Termination]
-        A2[Health Checks]
-        A3[Rate Limiting]
+    subgraph L1["Load Balancer (HAProxy/Nginx)"]
+        A1["SSL Termination"]
+        A2["Health Checks"]
+        A3["Rate Limiting"]
     end
 
-    subgraph M1[Monitoring Stack]
-        B1[Prometheus]
-        B2[Grafana]
-        B3[Alertmanager]
+    subgraph M1["Monitoring Stack"]
+        B1["Prometheus"]
+        B2["Grafana"]
+        B3["Alertmanager"]
     end
 
     %% =========== LAYER 2 ===========
-    subgraph APP[Application Layer]
-        C1[Node.js]
-        C2[PM2]
-        C3[REST APIs]
-        C4[Python]
-        C5[Gunicorn]
-        C6[FastAPI]
+    subgraph APP["Application Layer"]
+        C1["Node.js"]
+        C2["PM2"]
+        C3["REST APIs"]
+        C4["Python"]
+        C5["Gunicorn"]
+        C6["FastAPI"]
     end
 
-    subgraph DB[Database Layer]
-        D1[MySQL Cluster]
-        D2[MongoDB ReplicaSet]
-        D3[Redis Cache]
+    subgraph DB["Database Layer"]
+        D1["MySQL Cluster"]
+        D2["MongoDB ReplicaSet"]
+        D3["Redis Cache"]
     end
 
     %% =========== LAYER 3 ===========
-    subgraph ST[Storage Layer]
-        E1[Ceph Cluster]
-        E2[NFS Shares]
-        E3[Backup Storage]
+    subgraph ST["Storage Layer"]
+        E1["Ceph Cluster"]
+        E2["NFS Shares"]
+        E3["Backup Storage"]
     end
 
-    subgraph SEC[Security Layer]
-        F1[Bastion Host]
-        F2[VPN Access]
-        F3[Firewall Rules]
+    subgraph SEC["Security Layer"]
+        F1["Bastion Host"]
+        F2["VPN Access"]
+        F3["Firewall Rules"]
     end
-
 
     %% =========== CONNECTIONS ===========
     A0 --> L1

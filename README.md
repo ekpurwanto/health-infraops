@@ -27,6 +27,7 @@
 - 🤖 **Infrastructure as Code** - Automated provisioning dan deployment
 
 ## 🏗️ Architecture Overview```mermaid
+```mermaid
 flowchart TD
     A[Load Balancer] --> A1[SSL Termination]
     A --> A2[Health Checks]

@@ -1,8 +1,3 @@
-#!/bin/bash
-
-# Health-InfraOps Deployment Script
-# Comprehensive deployment script for infrastructure and applications
-
 set -e
 
 # Configuration

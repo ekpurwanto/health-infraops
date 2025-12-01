@@ -1,7 +1,3 @@
----
-# Health-InfraOps Backup Automation
-# Infokes Healthcare System - Data Protection
-
 - name: Configure Backup Infrastructure
   hosts: backup_servers
   become: yes
@@ -216,7 +212,7 @@
         port: "{{ smtp_port }}"
         subject: "Backup Integrity Check Failed"
         body: "Backup integrity check failed on {{ inventory_hostname }}. Please investigate."
-        from: "backup@infokes.co.id"
+        from: "backup@health.com"
         to: "{{ backup_notification_emails }}"
       when: backup_integrity.stdout != "0"
 
@@ -231,5 +227,5 @@
         port: "{{ smtp_port }}"
         subject: "Daily Backup Summary - {{ ansible_date_time.date }}"
         body: "Backup operations completed. Integrity: {{ 'PASS' if backup_integrity.stdout == '0' else 'FAIL' }}"
-        from: "backup@infokes.co.id"
+        from: "backup@health.com"
         to: "{{ backup_notification_emails }}"

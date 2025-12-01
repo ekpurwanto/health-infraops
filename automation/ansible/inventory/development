@@ -1,6 +1,3 @@
-# Health-InfraOps Development Inventory
-# Infokes Healthcare System - Development Environment
-
 [all:vars]
 ansible_user=admin
 ansible_ssh_private_key_file=~/.ssh/health-infraops-admin.key
@@ -23,7 +20,7 @@ dev_servers
 # Variables for development
 [development:vars]
 environment=development
-domain=dev.infokes.co.id
+domain=dev.health.com
 ssl_enabled=false
 backup_enabled=false
 monitoring_enabled=false

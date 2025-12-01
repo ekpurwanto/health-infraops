@@ -18,17 +18,17 @@ mysql_config:
   long_query_time: 2
 
 mysql_users:
-  - name: infokes_user
+  - name: health_user
     host: "10.0.10.0/24"
     password: "{{ vault_mysql_app_password }}"
-    priv: "infokes.*:ALL"
+    priv: "health.*:ALL"
   - name: backup_user
     host: "10.0.50.0/24"
     password: "{{ vault_mysql_backup_password }}"
     priv: "*.*:SELECT,RELOAD,LOCK TABLES,REPLICATION CLIENT"
 
 mysql_databases:
-  - name: infokes
+  - name: health
     encoding: utf8mb4
     collation: utf8mb4_unicode_ci
 
@@ -45,7 +45,7 @@ postgresql_config:
   maintenance_work_mem: "256MB"
 
 postgresql_users:
-  - name: infokes_user
+  - name: health.com_user
     password: "{{ vault_postgres_app_password }}"
     role_attr_flags: "LOGIN"
   - name: backup_user
@@ -53,8 +53,8 @@ postgresql_users:
     role_attr_flags: "LOGIN"
 
 postgresql_databases:
-  - name: infokes
-    owner: infokes_user
+  - name: health
+    owner: health_user
     encoding: UTF8
     template: template0
 
@@ -78,7 +78,7 @@ mongodb_config:
     bindIp: "0.0.0.0"
 
 mongodb_users:
-  - name: infokes_user
+  - name: health_user
     password: "{{ vault_mongodb_app_password }}"
     roles: "readWrite"
   - name: backup_user
@@ -86,7 +86,7 @@ mongodb_users:
     roles: "backup"
 
 mongodb_databases:
-  - name: infokes
+  - name: health
 
 # Replication Configuration
 mysql_replication:
@@ -103,7 +103,7 @@ postgresql_replication:
 
 mongodb_replication:
   enabled: true
-  replSetName: "infokesRS"
+  replSetName: "healthRS"
   members: 2
 
 # Backup Configuration

@@ -1,7 +1,3 @@
----
-# Health-InfraOps Security Hardening
-# Infokes Healthcare System - Security Automation
-
 - name: Base System Hardening
   hosts: all
   become: yes
@@ -328,5 +324,5 @@
           - Applications: Security headers and rate limiting configured
           
           Detailed report attached.
-        from: "security@infokes.co.id"
+        from: "security@health.com"
         to: "{{ security_notification_emails }}"

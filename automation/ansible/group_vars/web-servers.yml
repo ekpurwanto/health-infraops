@@ -1,7 +1,3 @@
----
-# Health-InfraOps Web Servers Configuration
-# Application and API server specific variables
-
 # Nginx Configuration
 nginx_user: www-data
 nginx_worker_processes: auto
@@ -36,8 +32,8 @@ app_jwt_secret: "{{ vault_app_jwt_secret }}"
 # Database Connection
 database_host: "db-mysql-01.infokes.co.id"
 database_port: 3306
-database_name: infokes
-database_user: infokes_user
+database_name: health
+database_user: health_user
 database_password: "{{ vault_database_password }}"
 
 # Redis Configuration
@@ -49,9 +45,9 @@ redis_password: "{{ vault_redis_password }}"
 api_rate_limit: 100
 api_rate_window: 900000  # 15 minutes in milliseconds
 api_cors_origins:
-  - "https://infokes.co.id"
-  - "https://www.infokes.co.id"
-  - "https://app.infokes.co.id"
+  - "https://health.com"
+  - "https://www.health.com"
+  - "https://app.health.com"
 
 # Security Headers
 security_headers:

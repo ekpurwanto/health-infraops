@@ -1,8 +1,3 @@
-#!/bin/bash
-
-# Health-InfraOps Health Check Script
-# Comprehensive health checking for infrastructure and applications
-
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -295,17 +290,17 @@ check_application_health() {
     
     case $environment in
         dev)
-            check_website_health "https://dev.infokes.co.id"
-            check_website_health "https://api.dev.infokes.co.id/health"
+            check_website_health "https://dev.health.com"
+            check_website_health "https://api.dev.health.com/health"
             ;;
         staging)
-            check_website_health "https://staging.infokes.co.id"
-            check_website_health "https://api.staging.infokes.co.id/health"
+            check_website_health "https://staging.health.com"
+            check_website_health "https://api.staging.health.com/health"
             ;;
         prod)
-            check_website_health "https://infokes.co.id"
-            check_website_health "https://api.infokes.co.id/health"
-            check_ssl_certificate "infokes.co.id"
+            check_website_health "https://health.com"
+            check_website_health "https://api.health.com/health"
+            check_ssl_certificate "health.com"
             ;;
     esac
     
@@ -378,10 +373,10 @@ check_monitoring_health() {
     # Check monitoring endpoints
     case $environment in
         prod)
-            check_website_health "https://monitoring.infokes.co.id" 200
+            check_website_health "https://monitoring.health.com" 200
             ;;
         staging)
-            check_website_health "https://monitoring.staging.infokes.co.id" 200
+            check_website_health "https://monitoring.staging.health.com" 200
             ;;
     esac
     

@@ -1,6 +1,3 @@
-# Health-InfraOps Production Inventory
-# Infokes Healthcare System - Production Environment
-
 [all:vars]
 ansible_user=admin
 ansible_ssh_private_key_file=~/.ssh/health-infraops-admin.key
@@ -18,10 +15,10 @@ service_type=load_balancer
 
 # Application Servers
 [app_servers]
-app-01.infokes.co.id ansible_host=10.0.10.11
-app-02.infokes.co.id ansible_host=10.0.10.12
-app-03.infokes.co.id ansible_host=10.0.10.13
-app-04.infokes.co.id ansible_host=10.0.10.14
+app-01.health.com ansible_host=10.0.10.11
+app-02.health.com ansible_host=10.0.10.12
+app-03.health.com ansible_host=10.0.10.13
+app-04.health.com ansible_host=10.0.10.14
 
 [app_servers:vars]
 ansible_ssh_port=2222
@@ -30,9 +27,9 @@ app_environment=production
 
 # API Servers
 [api_servers]
-api-01.infokes.co.id ansible_host=10.0.10.15
-api-02.infokes.co.id ansible_host=10.0.10.16
-api-03.infokes.co.id ansible_host=10.0.10.17
+api-01.health.com ansible_host=10.0.10.15
+api-02.health.com ansible_host=10.0.10.16
+api-03.health.com ansible_host=10.0.10.17
 
 [api_servers:vars]
 ansible_ssh_port=2222
@@ -41,12 +38,12 @@ app_environment=production
 
 # Database Servers
 [db_servers]
-db-mysql-01.infokes.co.id ansible_host=10.0.20.21
-db-mysql-02.infokes.co.id ansible_host=10.0.20.22
-db-postgres-01.infokes.co.id ansible_host=10.0.20.23
-db-postgres-02.infokes.co.id ansible_host=10.0.20.24
-db-mongo-01.infokes.co.id ansible_host=10.0.20.25
-db-mongo-02.infokes.co.id ansible_host=10.0.20.26
+db-mysql-01.health.com ansible_host=10.0.20.21
+db-mysql-02.health.com ansible_host=10.0.20.22
+db-postgres-01.health.com ansible_host=10.0.20.23
+db-postgres-02.health.com ansible_host=10.0.20.24
+db-mongo-01.health.com ansible_host=10.0.20.25
+db-mongo-02.health.com ansible_host=10.0.20.26
 
 [db_servers:vars]
 ansible_ssh_port=2222
@@ -54,8 +51,8 @@ service_type=database
 
 # MySQL Cluster
 [mysql_servers]
-db-mysql-01.infokes.co.id
-db-mysql-02.infokes.co.id
+db-mysql-01.health.com
+db-mysql-02.health.com
 
 [mysql_servers:vars]
 db_type=mysql
@@ -63,8 +60,8 @@ db_role=primary
 
 # PostgreSQL Cluster
 [postgres_servers]
-db-postgres-01.infokes.co.id
-db-postgres-02.infokes.co.id
+db-postgres-01.health.com
+db-postgres-02.health.com
 
 [postgres_servers:vars]
 db_type=postgresql
@@ -72,8 +69,8 @@ db_role=primary
 
 # MongoDB Cluster
 [mongodb_servers]
-db-mongo-01.infokes.co.id
-db-mongo-02.infokes.co.id
+db-mongo-01.health.com
+db-mongo-02.health.com
 
 [mongodb_servers:vars]
 db_type=mongodb
@@ -81,7 +78,7 @@ db_role=primary
 
 # Monitoring Servers
 [monitoring_servers]
-mon-01.infokes.co.id ansible_host=10.0.40.41
+mon-01.health.com ansible_host=10.0.40.41
 
 [monitoring_servers:vars]
 ansible_ssh_port=2222
@@ -89,8 +86,8 @@ service_type=monitoring
 
 # Backup Servers
 [backup_servers]
-backup-01.infokes.co.id ansible_host=10.0.50.10
-nfs-01.infokes.co.id ansible_host=10.0.50.11
+backup-01.health.com ansible_host=10.0.50.10
+nfs-01.health.com ansible_host=10.0.50.11
 
 [backup_servers:vars]
 ansible_ssh_port=2222
@@ -98,8 +95,8 @@ service_type=backup
 
 # DNS Servers
 [dns_servers]
-dns-01.infokes.co.id ansible_host=10.0.40.42
-dns-02.infokes.co.id ansible_host=10.0.40.43
+dns-01.health.com ansible_host=10.0.40.42
+dns-02.health.com ansible_host=10.0.40.43
 
 [dns_servers:vars]
 ansible_ssh_port=2222
@@ -129,7 +126,7 @@ infrastructure_servers
 # Variables for specific services
 [production:vars]
 environment=production
-domain=infokes.co.id
+domain=health.com
 ssl_enabled=true
 backup_enabled=true
 monitoring_enabled=true

@@ -1,8 +1,3 @@
-#!/bin/bash
-
-# Health-InfraOps Disaster Recovery Script
-# Comprehensive disaster recovery and failover procedures
-
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -532,7 +527,7 @@ generate_recovery_plan() {
 
 ## Contact Information
 - Primary Admin: $(whoami)
-- Secondary Admin: admin@infokes.co.id
+- Secondary Admin: admin@health.com
 - Emergency Contact: +62-XXX-XXXX-XXXX
 
 ## Recovery Validation Steps
